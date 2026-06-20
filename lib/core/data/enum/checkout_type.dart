@@ -1,0 +1,4 @@
+enum CheckoutType {
+  wallet,
+  paystack,
+}
