@@ -1,27 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_asset.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
-import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
-import 'package:icoba_endowment_mobile/core/utilities/extensions/color_extensions.dart';
+import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/user/user_vm.dart';
+import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/app_loader.dart';
+// import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
+// import 'package:icoba_endowment_mobile/core/utilities/extensions/color_extensions.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/donor.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/empty_state.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
-import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/listview_items/Screens/recent_donations.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/listview_items/recent_donor_item.dart';
 
-class RecentDonation extends StatefulWidget {
+import '../../../core/data/enum/view_state.dart';
+import '../../../core/data/view_models/dashboard_vm.dart';
+import '../error_state.dart';
+// import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
+
+class RecentDonation extends ConsumerStatefulWidget {
   const RecentDonation({super.key});
 
   @override
-  State<RecentDonation> createState() => _RecentDonationState();
+  ConsumerState<RecentDonation> createState() => _RecentDonationState();
 }
 
-class _RecentDonationState extends State<RecentDonation> {
+class _RecentDonationState extends ConsumerState<RecentDonation> {
+  // @override
+  // void initState() {
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     _fetchData();
+  //   });
+  //   super.initState();
+  // }
+
+  // void _fetchData() {
+  //   ref.read(dashboardViewModel).getTransactions();
+  // }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final dashboardVm = ref.watch(dashboardViewModel);
+    final userVm = ref.watch(userViewModel);
 
     return IcobaContainer(
       padding: EdgeInsets.all(16.w),
@@ -39,37 +64,64 @@ class _RecentDonationState extends State<RecentDonation> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (1 + 1 == 3)
-                Clickable(
-                  onPressed: () {},
-                  child: Text(
-                    "View all",
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.brandColor,
-                    ),
-                  ),
-                ),
+              // if (dashboardVm.transactions.length > 5)
+              //   Clickable(
+              //     onPressed: () {
+              //       pushNavigation(
+              //         context: context,
+              //         widget: RecentDonations(),
+              //         routeName: NamedRoutes.recentDonations,
+              //       );
+              //     },
+              //     child: Text(
+              //       "View all",
+              //       style: textTheme.bodyMedium?.copyWith(
+              //         fontWeight: FontWeight.bold,
+              //         color: colorScheme.brandColor,
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
           SizedBox(height: 12.h),
-          1 + 1 == 2
-              ? Padding(
+          Builder(
+            builder: (context) {
+              if (dashboardVm.dashboardState == ViewState.busy) {
+                return AppLoader();
+              }
+              if (dashboardVm.dashboardState == ViewState.error) {
+                // if (true) {
+                return Center(
+                  child: ErrorState(
+                    message: dashboardVm.message,
+                    onPressed: () async {
+                      dashboardVm.getRecentDonations();
+                    },
+                  ),
+                );
+              }
+              if (dashboardVm.transactions.isEmpty) {
+                return Padding(
                   padding: const EdgeInsets.all(18.0),
                   child: EmptyState(
                     asset: AppAsset.empty,
                     title: "You are yet to make a donation",
                   ),
-                )
-              : ListView.separated(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return Donor();
-                  },
-                  separatorBuilder: (context, index) => SizedBox(height: 16.h),
-                  itemCount: 3,
-                ),
+                );
+              }
+              return ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final data = dashboardVm.donors[index];
+                  return RecentDonorItem(donor: data);
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.donors.length,
+              );
+            },
+          ),
         ],
       ),
     );

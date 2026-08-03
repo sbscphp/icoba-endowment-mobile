@@ -18,7 +18,6 @@ abstract class Env {
   @EnviedField(varName: 'QA_BASE_URL')
   static final String qaBaseUrl = _Env.qaBaseUrl;
 
-
   ///--- API Routes ---
   @EnviedField(defaultValue: 'IDENTITY')
   static final String identity = _Env.identity;
@@ -41,4 +40,17 @@ abstract class Env {
 
   @EnviedField(defaultValue: 'PUSHER_APP_CLUSTER')
   static final String pusherAppCluster = _Env.pusherAppCluster;
+
+  //----Network Manager-----
+  @EnviedField(defaultValue: 'X-CLIENTKEY')
+  static final String xClientKey = _Env.xClientKey;
+
+  @EnviedField(defaultValue: 'ENCRYPTION_KEY')
+  static final String encryptionKey = _Env.encryptionKey;
+
+  @EnviedField(defaultValue: 'IV')
+  static final String iv = _Env.iv;
+
+  @EnviedField(defaultValue: 'SETTINGS')
+  static final String settings = _Env.settings;
 }

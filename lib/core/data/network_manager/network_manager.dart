@@ -6,13 +6,12 @@ import 'package:flutter/material.dart';
 import '../../../locator.dart';
 import '../../constants/app_config.dart';
 import '../../constants/named_routes.dart';
+import '../../env/env.dart';
 import '../../utilities/extensions/num_extension.dart';
 import '../../utilities/secure_storage/secure_storage_utils.dart';
 import '../../utilities/utilities.dart';
 import '../enum/request_type.dart';
 import '../services/navigation_service.dart';
-
-/////A WORK IN PROGRESS //////////
 
 class NetworkManager {
   static final NetworkManager _instance = NetworkManager._internal();
@@ -23,6 +22,7 @@ class NetworkManager {
     headers: {
       HttpHeaders.acceptHeader: 'application/json',
       HttpHeaders.contentTypeHeader: 'application/json',
+      'X-ClientKey': Env.xClientKey,
       'Platform': 'mobile',
     },
   );
@@ -192,16 +192,26 @@ class NetworkManager {
         final responseData = e.response!.data;
 
         if (statusCode == 400) {
+          // log(responseData.toString());
           if (retrieveResponse) return responseData;
-          throw (responseData['message']);
+          throw (responseData['preview']['message']);
         } else if (statusCode == 401) {
-          // if (Utilities.unauthorizedFlag == false) sessionExpired();
+          if (Utilities.unauthorizedFlag == false) sessionExpired();
           if (retrieveUnauthorizedResponse) return responseData;
-          throw (responseData['message']);
+          throw (responseData['preview']['message']);
         } else if (statusCode == 403 || statusCode == 404) {
-          throw (responseData['message'] ?? "Resource not available");
+          log(responseData.toString());
+          if (responseData['message'] != null) {
+            throw (responseData['message'] ?? "Invalid credentials");
+          }
+          throw (responseData['preview']['message'] ??
+              "Resource not available");
         } else if (statusCode.isBetween(402, 422)) {
-          throw (responseData['message'] ?? "Invalid credentials");
+          log("402-422 :::> ${responseData.toString()}");
+          if (responseData['message'] != null) {
+            throw (responseData['message'] ?? "Invalid credentials");
+          }
+          throw (responseData['preview']['message'] ?? "Invalid credentials");
         } else if (statusCode.isBetween(500, 599)) {
           if (statusCode == 502) {
             throw ("We are unable to process request at this time, please try again later");
@@ -209,7 +219,7 @@ class NetworkManager {
           throw (responseData['message'] ??
               "Server error, please try again later");
         } else {
-          throw ("Unable to process request, ${responseData['message'] ?? 'Unknown error'}");
+          throw ("Unable to process request, ${responseData['preview']['message'] ?? 'Unknown error'}");
         }
       } else {
         throw ("An unexpected error occurred");
@@ -220,51 +230,60 @@ class NetworkManager {
   }
 
   Future<List<int>> networkBytesRequestManager(
-  RequestType requestType,
-  String requestUrl, {
-  dynamic body,
-  Map<String, dynamic>? queryParameters,
-  bool useAuth = true,
-}) async {
-  final baseUrl = AppConfig.baseUrl;
-  final url = '$baseUrl$requestUrl';
+    RequestType requestType,
+    String requestUrl, {
+    dynamic body,
+    Map<String, dynamic>? queryParameters,
+    bool useAuth = true,
+  }) async {
+    final baseUrl = AppConfig.baseUrl;
+    final url = '$baseUrl$requestUrl';
 
-  try {
-    Response response;
-    final options = Options(
-      responseType: ResponseType.bytes, // 👈 bytes response
-      extra: {"useAuth": useAuth},
-    );
+    try {
+      Response response;
+      final options = Options(
+        responseType: ResponseType.bytes, // 👈 bytes response
+        extra: {"useAuth": useAuth},
+      );
 
-    switch (requestType) {
-      case RequestType.get:
-        response = await client.get(url, queryParameters: queryParameters, options: options);
-        break;
-      case RequestType.post:
-        response = await client.post(url, data: body, queryParameters: queryParameters, options: options);
-        break;
-      default:
-        response = await client.get(url, options: options);
+      switch (requestType) {
+        case RequestType.get:
+          response = await client.get(
+            url,
+            queryParameters: queryParameters,
+            options: options,
+          );
+          break;
+        case RequestType.post:
+          response = await client.post(
+            url,
+            data: body,
+            queryParameters: queryParameters,
+            options: options,
+          );
+          break;
+        default:
+          response = await client.get(url, options: options);
+      }
+
+      return response.data as List<int>;
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw ("Network timed out, please check your connection and try again");
+      }
+      throw ("Failed to fetch file: ${e.message}");
+    } catch (e) {
+      throw ("An error occurred while fetching file");
     }
-
-    return response.data as List<int>;
-  } on DioException catch (e) {
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      throw ("Network timed out, please check your connection and try again");
-    }
-    throw ("Failed to fetch file: ${e.message}");
-  } catch (e) {
-    throw ("An error occurred while fetching file");
   }
 }
-}
 
-// sessionExpired() {
-//   Utilities.unauthorizedFlag = true;
-//   NavigationService navigationService = locator<NavigationService>();
-//   navigationService.pushAndClearRoutes(
-//     routeName: NamedRoutes.login,
-//     clearRoute: NamedRoutes.onboarding,
-//   );
-// }
+sessionExpired() {
+  Utilities.unauthorizedFlag = true;
+  NavigationService navigationService = locator<NavigationService>();
+  navigationService.pushAndClearRoutes(
+    routeName: NamedRoutes.login,
+    clearRoute: NamedRoutes.landing,
+  );
+}

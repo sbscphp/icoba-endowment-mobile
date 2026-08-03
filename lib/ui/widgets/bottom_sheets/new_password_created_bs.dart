@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_asset.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
@@ -8,7 +7,6 @@ import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
 import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_button.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_svg.dart';
-import 'package:icoba_endowment_mobile/ui/widgets/show_flush_bar.dart';
 
 import 'bs_header.dart';
 

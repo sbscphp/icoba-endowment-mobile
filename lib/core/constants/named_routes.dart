@@ -20,6 +20,8 @@ class NamedRoutes {
   static const successfulDonation = '/successfulDonation';
   static const pledgeSummary = '/pledgeSummary';
   static const recognition = '/recognition';
+  static const recentDonations = '/recentDonations';
+  static const recentPledges = '/recentPledges';
 
   //notification
   static const notificationScreen = '/notificationScreen';

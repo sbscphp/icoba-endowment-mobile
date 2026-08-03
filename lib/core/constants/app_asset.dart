@@ -28,13 +28,18 @@ class AppAsset {
   static const String calendar = '$_iconDirectory/calendar.svg';
   static const String ngn = '$_iconDirectory/ngn.svg';
   static const String usa = '$_iconDirectory/usa.svg';
+  static const String gbp = '$_iconDirectory/gbp.svg';
+  static const String defaultcur = '$_iconDirectory/default.svg';
   static const String cards = '$_iconDirectory/cards.svg';
   static const String bank = '$_iconDirectory/bank.svg';
   static const String visa = '$_iconDirectory/visa.svg';
   static const String masterCard = '$_iconDirectory/master_card.svg';
   static const String verve = '$_iconDirectory/verve.svg';
   static const String dottedCircle = '$_iconDirectory/dotted_circle.svg';
-
+  static const String close = '$_iconDirectory/close.svg';
+  static const String biometricFace = '$_iconDirectory/biometric_face.png';
+  static const String biometricFingerPrint =
+      '$_iconDirectory/biometric_fingerprint.svg';
 
   //images
   static const String icobaEndownmentLogo =

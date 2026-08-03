@@ -8,7 +8,25 @@ import 'package:icoba_endowment_mobile/ui/widgets/icoba_tag.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
 
 class Donor extends StatelessWidget {
-  const Donor({super.key});
+  final String? donorName;
+  final String? setNumber;
+  final double? amount;
+  final DateTime? date;
+  final String? currencyCode;
+  final String? tagText;
+  final Color? tagColor;
+  final bool showTagRow;
+  const Donor({
+    super.key,
+    this.donorName,
+    this.setNumber,
+    this.amount,
+    this.date,
+    this.currencyCode,
+    this.tagText,
+    this.tagColor,
+    this.showTagRow = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,39 +45,50 @@ class Donor extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Philip Inniebong", style: textTheme.bodyMedium),
-                  Text(
-                    "Set: 1999/20",
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.textTertiary,
+                  Text(donorName ?? "N/A", style: textTheme.bodyMedium),
+                  if (setNumber != null)
+                    Text(
+                      "Set: $setNumber",
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.textTertiary,
+                      ),
                     ),
-                  ),
                 ],
               ),
-              NairaDisplay(
-                amount: 200000,
-                fontSize: 14.sp,
-                color: colorScheme.brandColor,
+              SizedBox(width: 12.w),
+              Flexible(
+                child: NairaDisplay(
+                  amount: amount ?? 0,
+                  currencyCode: currencyCode,
+                  fontSize: 14.sp,
+                  color: colorScheme.brandColor,
+                  textAlign: TextAlign.end,
+                ),
               ),
             ],
           ),
-          Divider(thickness: .5, color: ColorPath.athensGrey),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: FittedBox(
-                  child: Text(
-                    "${DateUtilities.dMY(DateTime.now())},${DateUtilities.time(date: DateTime.now())}",
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.textTertiary,
+          if (showTagRow) Divider(thickness: .5, color: ColorPath.athensGrey),
+          if (showTagRow)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    child: Text(
+                      "${DateUtilities.dMY(date ?? DateTime.now())},${DateUtilities.time(date: date ?? DateTime.now())}",
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.textTertiary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              IcobaTag(),
-            ],
-          ),
+                SizedBox(width: 8.w),
+                IcobaTag2(
+                  donorType: tagText ?? "N/A",
+                  color: tagColor ?? colorScheme.textTertiary,
+                ),
+              ],
+            ),
         ],
       ),
     );

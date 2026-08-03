@@ -15,7 +15,9 @@ class CustomCheck extends StatelessWidget {
         borderRadius: BorderRadius.circular(4.r),
         color: isChecked ? ColorPath.iceBlue : null,
         border: Border.all(
-          color: isChecked ? ColorPath.brandColor : ColorPath.athensGrey4,
+          color: isChecked
+              ? ColorPath.brandColor
+              : const Color.fromARGB(255, 118, 120, 124),
         ),
       ),
       child: isChecked

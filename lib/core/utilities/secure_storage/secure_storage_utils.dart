@@ -8,7 +8,7 @@ import 'secure_storage_init.dart';
 class SecureStorageUtils {
   ///retrieve token
   static Future<String?> retrieveToken() async {
-    return SecureStorageInit.storage.read(key: SecuredStorageConstants.token);
+    return await SecureStorageInit.storage.read(key: SecuredStorageConstants.token);
   }
 
   ///save passcode
@@ -34,12 +34,12 @@ class SecureStorageUtils {
   }
 
   ///save user details
-  static saveUser({required String user}) async {
-    SecureStorageInit.storage.write(
-      key: SecuredStorageConstants.user,
-      value: user,
-    );
-  }
+  // static saveUser({required String user}) async {
+  //   SecureStorageInit.storage.write(
+  //     key: SecuredStorageConstants.user,
+  //     value: user,
+  //   );
+  // }
 
   ///retrieve user details
   // static Future<User?> retrieveUser() async {
@@ -96,12 +96,12 @@ class SecureStorageUtils {
   // }
 
   ///saves biometrics flag
-  static biometricsEnabled() async {
-    SecureStorageInit.storage.write(
-      key: SecuredStorageConstants.biometricStatus,
-      value: 'true',
-    );
-  }
+  // static biometricsEnabled() async {
+  //   SecureStorageInit.storage.write(
+  //     key: SecuredStorageConstants.biometricStatus,
+  //     value: 'true',
+  //   );
+  // }
 
   // ///retrieves 'biometrics status flag'
   // static Future<bool> isBiometricsEnabled() async{
@@ -186,37 +186,21 @@ class SecureStorageUtils {
     );
   }
 
+  ///
+  static saveEmail({required String user}) async {
+    await SecureStorageInit.storage.write(
+      key: SecuredStorageConstants.user,
+      value: user,
+    );
+  }
+
   ///retrieve chat Session Token
-  static Future<String?> retrieveSessionToken() async {
+  static Future<String?> retrieveEmail() async {
     return SecureStorageInit.storage.read(
-      key: SecuredStorageConstants.chatSessionToken,
+      key: SecuredStorageConstants.user,
     );
   }
 
-  ///save passcode
-  static saveSessionToken({required String token}) async {
-    await SecureStorageInit.storage.write(
-      key: SecuredStorageConstants.chatSessionToken,
-      value: token,
-    );
-  }
 
-  static Future<String?> retrieveDashboardSummary() async {
-    return SecureStorageInit.storage.read(
-      key: SecuredStorageConstants.dashboardSummary,
-    );
-  }
 
-  static Future<void> saveDashboardSummary({required String dashboardSummary}) async {
-    await SecureStorageInit.storage.write(
-      key: SecuredStorageConstants.dashboardSummary,
-      value: dashboardSummary,
-    );
-  }
-
-    static Future<void> deletedashboardSummary({required String dashboardSummary}) async {
-    await SecureStorageInit.storage.delete(
-      key: SecuredStorageConstants.dashboardSummary,
-    );
-  }
 }

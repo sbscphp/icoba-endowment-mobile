@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
+import 'package:icoba_endowment_mobile/core/utilities/extensions/color_extensions.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
 
 class IcobaTag extends StatelessWidget {
@@ -29,6 +30,8 @@ class IcobaTag extends StatelessWidget {
       case "founder":
         return "Founder's circle";
       case "friends":
+      case "Friends of Igbobi College":
+
         return "Friends of Igbobi college";
       case "bronze":
         return "Bronze tier";
@@ -48,6 +51,7 @@ class IcobaTag extends StatelessWidget {
       case "founder":
         return ColorPath.popGreen;
       case "friends":
+      case "Friends of Igbobi College":
         return ColorPath.purple;
       case "bronze":
         return ColorPath.bronze;
@@ -67,6 +71,7 @@ class IcobaTag extends StatelessWidget {
       case "founder":
         return ColorPath.scandalGreen;
       case "friends":
+      case "Friends of Igbobi College":
         return ColorPath.lightPurple;
       case "bronze":
         return ColorPath.lightBronze;
@@ -79,5 +84,32 @@ class IcobaTag extends StatelessWidget {
       default:
         return ColorPath.scandalGreen;
     }
+  }
+}
+
+class IcobaTag2 extends StatelessWidget {
+  final String donorType;
+  final Color? color;
+  const IcobaTag2({super.key, this.donorType = "founder", this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    // final colorScheme = Theme.of(context).colorScheme;
+    return IcobaContainer(
+      // bgColor: _getBaseColor(),
+      bgColor: color!.withCustomOpacity(.2),
+      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: Row(
+        children: [
+          // Icon(Icons.star, size: 12, color: _getColor()),
+          Icon(Icons.star, size: 12, color: color ?? ColorPath.popGreen),
+
+          SizedBox(width: 2.w),
+          // Text(_getText(), style: textTheme.bodySmall),
+          Text(donorType, style: textTheme.bodySmall),
+        ],
+      ),
+    );
   }
 }

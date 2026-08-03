@@ -17,6 +17,7 @@ class NairaDisplay extends StatelessWidget {
   final bool useDollar;
   final bool isRoundUpAmount;
   final String? currencyCode;
+  final String? fontFamily;
   const NairaDisplay({
     super.key,
     required this.amount,
@@ -29,7 +30,8 @@ class NairaDisplay extends StatelessWidget {
     this.textAlign,
     this.useDollar = false,
     this.isRoundUpAmount = false,
-    this.currencyCode
+    this.currencyCode,
+    this.fontFamily
   });
 
   @override
@@ -45,6 +47,7 @@ class NairaDisplay extends StatelessWidget {
               color: color ?? Theme.of(context).colorScheme.textPrimary,
               fontSize: fontSize?.sp ?? 24.sp,
               fontWeight: fontWeight ?? FontWeight.w700,
+              fontFamily: fontFamily
             ),
           ),
         Flexible(
@@ -57,6 +60,7 @@ class NairaDisplay extends StatelessWidget {
                 color: color ?? Theme.of(context).colorScheme.textPrimary,
                 fontSize: fontSize?.sp ?? 24.sp,
                 fontWeight: fontWeight ?? FontWeight.w700,
+              fontFamily: fontFamily
               ),
               children: [
                 TextSpan(
@@ -87,10 +91,11 @@ TextSpan textspanNairaDisplay({
   double amount = 0.0,
   Color? color,
   double? fontSize,
+  String? currencyCode = "NGN",
   FontWeight? fontWeight,
 }) {
   return TextSpan(
-    text: '${Utilities.nairaSign}${Utilities.formatAmount(amount: amount)}',
+    text: '${CurrencyUtils.getCurrencySymbol(currencyCode: currencyCode)}${Utilities.formatAmount(amount: amount)}',
 
     style: TextStyle(
       color: color,

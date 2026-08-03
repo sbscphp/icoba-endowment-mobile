@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
-// import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:icoba_endowment_mobile/core/constants/app_constants.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/show_flush_bar.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -24,29 +26,29 @@ class ReceiptUtils {
   }
 
   //saves image(receipt) to gallery
-  // static saveImageToGallery({
-  //   required GlobalKey key,
-  //   required BuildContext context,
-  // }) async {
-  //   try {
-  //     Uint8List bytes = await capturePng(key: key);
-  //     final result = await ImageGallerySaverPlus.saveImage(bytes);
-  //     if (result['isSuccess'] == true) {
-  //       //show success message
-  //       // showFlushBar(
-  //       //   context: context,
-  //       //   success: true,
-  //       //   message: 'Receipt saved to your device',
-  //       // );
-  //     } else {
-  //       //show error message
-  //       // showFlushBar(context: context, message: defaultErrorMessage);
-  //     }
-  //   } catch (e) {
-  //     //show error message
-  //     // showFlushBar(context: context, message: e.toString());
-  //   }
-  // }
+  static saveImageToGallery({
+    required GlobalKey key,
+    required BuildContext context,
+  }) async {
+    try {
+      Uint8List bytes = await capturePng(key: key);
+      final result = await ImageGallerySaverPlus.saveImage(bytes);
+      if (result['isSuccess'] == true) {
+        //show success message
+        showFlushBar(
+          context: context,
+          success: true,
+          message: 'Document saved to your device',
+        );
+      } else {
+        //show error message
+        showFlushBar(context: context, message: defaultErrorMessage,success: false);
+      }
+    } catch (e) {
+      //show error message
+      showFlushBar(context: context, message: e.toString(),success: false);
+    }
+  }
 
   //share image(receipt)
   static shareImage({
@@ -64,7 +66,7 @@ class ReceiptUtils {
       );
     } catch (e) {
       //show error message
-      // showFlushBar(context: context, message: e.toString());
+      showFlushBar(context: context, message: e.toString(),success: false);
     }
   }
 

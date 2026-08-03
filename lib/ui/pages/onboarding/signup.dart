@@ -1,27 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
+import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
+import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/auth/auth_vm.dart';
+import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
 import 'package:icoba_endowment_mobile/core/utilities/validator.dart';
+import 'package:icoba_endowment_mobile/ui/pages/donation_and_pledge/contribution_amount.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/account_verification_bs.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/base_bottom_sheet.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/country_code_bottom_sheet.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/select_option_bottom_sheet.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/busy_overlay.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_appbar.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_button.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_scaffold.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_text_field.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/screen_title.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/show_flush_bar.dart';
 
 import '../../../core/data/enum/signup_type.dart';
+import '../../../core/utilities/utilities.dart';
 import '../../widgets/auth/password_requirement.dart';
 
-class Signup extends StatefulWidget {
+class Signup extends ConsumerStatefulWidget {
   final SignupType signupType;
-  const Signup({super.key, required this.signupType});
+  final String? titlePrefix;
+  final bool isDonation;
+
+  const Signup({
+    super.key,
+    required this.signupType,
+    this.titlePrefix,
+    this.isDonation = false,
+  });
 
   @override
-  State<Signup> createState() => _SignupState();
+  ConsumerState<Signup> createState() => _SignupState();
 }
 
-class _SignupState extends State<Signup> {
+class _SignupState extends ConsumerState<Signup> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      resetForm();
+    });
+  }
+
+  resetForm() {
+    final vm = ref.read(authViewModel);
+    vm.selectedCountry = vm.countries.firstWhere(
+      (e) => e.name?.toLowerCase() == 'nigeria',
+    );
+    vm.selectedSet = null;
+    vm.selectedCorporateCategory = null;
+    setState(() {});
+  }
+
+  final TextEditingController _fname = TextEditingController();
+  final TextEditingController _lname = TextEditingController();
+  final TextEditingController _set = TextEditingController();
+  final TextEditingController _alumniId = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _phone = TextEditingController();
+  final TextEditingController _password = TextEditingController();
+  // CORP BODY
+  final TextEditingController _category = TextEditingController();
+  final TextEditingController _organizationName = TextEditingController();
+  final TextEditingController _rcNumber = TextEditingController();
+  final TextEditingController _tin = TextEditingController();
+
+  String iso2 = "NG";
+
   final _formKey = GlobalKey<FormState>();
   bool isObscured = true;
   List<bool> _results = [false, false, false, false, false];
@@ -30,167 +85,389 @@ class _SignupState extends State<Signup> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    return CustomScaffold(
-      appBar: customAppBar(context: context),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ScreenTitle(
-              title: userTypeTitle(),
-              subtitle: "Sign up on the ICOBA endowment application.",
-            ),
-            SizedBox(height: 24.h),
-            if (widget.signupType == SignupType.corporateDonor)
-              Column(
-                children: [
-                  Clickable(
-                    onPressed: () {},
-                    child: CustomTextField(
-                      label: "Category",
-                      enabled: false,
-                      readOnly: true,
-                      hintText: "Select category",
-                      validator: FieldValidator.validate,
-                      suffixIcon: Padding(
-                        padding: EdgeInsets.only(right: 16.w),
-                        child: Icon(
-                          Icons.keyboard_arrow_down_outlined,
-                          color: colorScheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  CustomTextField(
-                    label: "Organization name",
-                    validator: FieldValidator.validate,
-                    hintText: "Enter organization name",
-                  ),
-                  SizedBox(height: 16.h),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  Row(
+    final vm = ref.watch(authViewModel);
+    return BusyOverlay(
+      show: vm.state == ViewState.busy,
+      child: CustomScaffold(
+        appBar: customAppBar(context: context),
+        body: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ScreenTitle(
+                  title:
+                      "${widget.titlePrefix} ${widget.isDonation ? "" : "Sign Up"}",
+                  subtitle: widget.isDonation
+                      ? "Provide your information to donate to a campaign"
+                      : "Sign up on the ICOBA endowment application.",
+                ),
+                SizedBox(height: 24.h),
+                if (widget.signupType == SignupType.corporateDonor)
+                  Column(
                     children: [
-                      Expanded(
+                      Clickable(
+                        onPressed: () {
+                          baseBottomSheet(
+                            context: context,
+                            content: SelectOptionBottomSheet(
+                              bottomSheetTitle: "Select Category",
+                              options: vm.corporateCategories
+                                  .map((e) => e.name ?? "N/A")
+                                  .toList(),
+                              onOptionSelected: (value) {
+                                setState(() {
+                                  _category.text = value;
+                                  vm.selectedCorporateCategory = vm
+                                      .corporateCategories
+                                      .firstWhere(
+                                        (element) => element.name == value,
+                                        orElse: () =>
+                                            vm.corporateCategories.first,
+                                      );
+                                });
+                              },
+                              selectedOption: _set.text,
+                            ),
+                          );
+                        },
                         child: CustomTextField(
-                          label: "First name",
-                          validator: FieldValidator.validate,
-                          hintText: "Enter First name",
-                        ),
-                      ),
-                      SizedBox(width: 18.w),
-                      Expanded(
-                        child: CustomTextField(
-                          label: "Last name",
-                          validator: FieldValidator.validate,
-                          hintText: "Enter Last name",
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-                  if (widget.signupType == SignupType.alumni)
-                    Column(
-                      children: [
-                        Clickable(
-                          onPressed: () {},
-                          child: CustomTextField(
-                            label: "Set",
-                            enabled: false,
-                            readOnly: true,
-                            hintText: "Select set",
-                            validator: FieldValidator.validate,
-                            suffixIcon: Padding(
-                              padding: EdgeInsets.only(right: 16.w),
-                              child: Icon(
-                                Icons.keyboard_arrow_down_outlined,
-                                color: colorScheme.textSecondary,
-                              ),
+                          label: "Category",
+                          controller: _category,
+                          enabled: false,
+                          readOnly: true,
+                          hintText: "Select category",
+                          validator:
+                              widget.signupType == SignupType.corporateDonor
+                              ? FieldValidator.validate
+                              : null,
+                          suffixIcon: Padding(
+                            padding: EdgeInsets.only(right: 16.w),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_outlined,
+                              color: colorScheme.textSecondary,
                             ),
                           ),
                         ),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          label: "Alumni ID",
-                          validator: FieldValidator.validate,
-                          hintText: "Enter Last name",
-                        ),
-                        SizedBox(height: 16.h),
-                      ],
-                    ),
-                ],
-              ),
-
-            CustomTextField(
-              label: "Email",
-              validator: EmailValidator.validateEmail,
-              hintText: "Enter email address",
-            ),
-            SizedBox(height: 16.h),
-            CustomTextField(
-              label: "Phone number",
-              validator: PhoneNumberValidator.validatePhoneNumber,
-              hintText: "+1 (555) 000-0000",
-              prefixIcon: Padding(
-                padding: EdgeInsets.only(left: 12),
-                child: Clickable(
-                  onPressed: () {
-                    //todo:::show country dialog here
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                      ),
+                      SizedBox(height: 16.h),
+                      CustomTextField(
+                        label: "Organization name",
+                        controller: _organizationName,
+                        validator:
+                            widget.signupType == SignupType.corporateDonor
+                            ? FieldValidator.validate
+                            : null,
+                        hintText: "Enter organization name",
+                      ),
+                      SizedBox(height: 16.h),
+                      CustomTextField(
+                        label: "RC Number",
+                        controller: _rcNumber,
+                        validator:
+                            widget.signupType == SignupType.corporateDonor
+                            ? FieldValidator.validate
+                            : null,
+                        inputFormatters: [
+                          // FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(8),
+                        ],
+                        keyboardType: TextInputType.number,
+                        hintText: "Enter RC Number",
+                      ),
+                      SizedBox(height: 16.h),
+                      CustomTextField(
+                        label: "TIN",
+                        controller: _tin,
+                        inputFormatters: [
+                          // FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(15),
+                        ],
+                        keyboardType: TextInputType.number,
+                        validator:
+                            widget.signupType == SignupType.corporateDonor
+                            ? FieldValidator.validate
+                            : null,
+                        hintText: "Enter TIN",
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
+                  )
+                else
+                  Column(
                     children: [
-                      Text(
-                        "US",
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.textSecondary,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomTextField(
+                              label: "First name",
+                              controller: _fname,
+                              validator:
+                                  widget.signupType != SignupType.corporateDonor
+                                  ? FieldValidator.validate
+                                  : null,
+                              hintText: "Enter First name",
+                            ),
+                          ),
+                          SizedBox(width: 18.w),
+                          Expanded(
+                            child: CustomTextField(
+                              label: "Last name",
+                              controller: _lname,
+                              validator:
+                                  widget.signupType != SignupType.corporateDonor
+                                  ? FieldValidator.validate
+                                  : null,
+                              hintText: "Enter Last name",
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      if (widget.signupType == SignupType.alumni)
+                        Column(
+                          children: [
+                            Clickable(
+                              onPressed: () {
+                                baseBottomSheet(
+                                  context: context,
+                                  content: SelectOptionBottomSheet(
+                                    bottomSheetTitle: "Select Set",
+                                    options: vm.sets
+                                        .map((e) => e.name ?? "N/A")
+                                        .toList(),
+                                    onOptionSelected: (value) {
+                                      setState(() {
+                                        _set.text = value;
+                                        vm.selectedSet = vm.sets.firstWhere(
+                                          (element) => element.name == value,
+                                          orElse: () => vm.sets.first,
+                                        );
+                                      });
+                                    },
+                                    selectedOption: _set.text,
+                                  ),
+                                );
+                              },
+                              child: CustomTextField(
+                                label: "Set",
+                                controller: _set,
+                                enabled: false,
+                                readOnly: true,
+                                hintText: "Select set",
+                                validator: FieldValidator.validate,
+                                suffixIcon: Padding(
+                                  padding: EdgeInsets.only(right: 16.w),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_outlined,
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            CustomTextField(
+                              label: "Alumni ID",
+                              controller: _alumniId,
+                              hintText: "Enter ID",
+                            ),
+                            SizedBox(height: 16.h),
+                          ],
                         ),
-                      ),
-                      Icon(
-                        Icons.keyboard_arrow_down_outlined,
-                        color: colorScheme.textSecondary,
-                      ),
                     ],
                   ),
+
+                CustomTextField(
+                  label: "Email",
+                  validator: EmailValidator.validateEmail,
+                  hintText: "Enter email address",
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
                 ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            CustomTextField(
-              label: "Create Password ",
-              // controller: _pwd,
-              hintText: "Enter password",
-              obscure: isObscured,
-              validator: FieldValidator.validate,
-              suffixIcon: Padding(
-                padding: EdgeInsets.only(right: 14.w),
-                child: Clickable(
-                  onPressed: () {
-                    setState(() {
-                      isObscured = !isObscured;
-                    });
-                  },
-                  child: Icon(
-                    isObscured
-                        ? Icons.remove_red_eye_outlined
-                        : Icons.visibility_off_outlined,
-                    color: ColorPath.paleGrey,
+                SizedBox(height: 16.h),
+                CustomTextField(
+                  label: "Phone number",
+                  validator: PhoneNumberValidator.validatePhoneNumber,
+                  controller: _phone,
+                  keyboardType: TextInputType.phone,
+                  hintText: "080-0000-0000",
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(11),
+                  ],
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Clickable(
+                      onPressed: () {
+                        baseBottomSheet(
+                          context: context,
+                          content: CountryCodeBottomSheet(
+                            onOptionSelected: (value) {
+                              setState(() {
+                                iso2 = value;
+                              });
+                            },
+                            selectedOption: vm.selectedCountry,
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            iso2,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down_outlined,
+                            color: colorScheme.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              onChanged: (value) {
-                checkPassWordRequirement(password: value);
-              },
+                SizedBox(height: 16.h),
+                if (!widget.isDonation)
+                  Column(
+                    children: [
+                      CustomTextField(
+                        label: "Create Password ",
+                        controller: _password,
+                        hintText: "Enter password",
+                        obscure: isObscured,
+                        validator: widget.isDonation
+                            ? null
+                            : FieldValidator.validate,
+                        suffixIcon: Padding(
+                          padding: EdgeInsets.only(right: 14.w),
+                          child: Clickable(
+                            onPressed: () {
+                              setState(() {
+                                isObscured = !isObscured;
+                              });
+                            },
+                            child: Icon(
+                              isObscured
+                                  ? Icons.remove_red_eye_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: ColorPath.paleGrey,
+                            ),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          checkPassWordRequirement(password: value);
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+                      PasswordRequirement(results: _results),
+                    ],
+                  ),
+                SizedBox(height: 24.h),
+                CustomButton(
+                  onPressed: () async {
+                    Utilities.hideKeyboard(context);
+
+                    final validate = _formKey.currentState!.validate();
+                    if (validate) {
+                      if (widget.isDonation) {
+                        //donation as guest
+                        final phoneNumber =
+                            "${vm.selectedCountry?.dialCode}${Utilities.cleanPhoneNumber(phoneNumber: _phone.text).substring(1)}";
+                        pushNavigation(
+                          context: context,
+                          widget: ContributionAmount(
+                            isGuest: true,
+                            guestEmail: handleParam(_email.text),
+                            guestPhone: handleParam(phoneNumber),
+                            guestFName: handleParam(_fname.text),
+                            guestLName: handleParam(_lname.text),
+                            guestOrganizationName: handleParam(
+                              _organizationName.text,
+                            ),
+                            guestTIN: handleParam(_tin.text),
+                            guestRCNumber: handleParam(_rcNumber.text),
+                            guestCorporateUUID: handleParam(
+                              vm.selectedCorporateCategory?.uuid ?? "",
+                            ),
+                            guestSetNumber: handleParam(
+                              vm.selectedSet?.setNumber ?? "",
+                            ),
+                            guestAlumniId: handleParam(_alumniId.text),
+                            guestDonorType: handleParam(
+                              vm.selectedDonorType?.slug ?? "",
+                            ),
+                          ),
+                          routeName: NamedRoutes.contributionAmount,
+                        );
+                        return;
+                      }
+                      if (allResultsTrue()) {
+                        if (widget.signupType == SignupType.alumni) {
+                          await vm.registerAlumni(
+                            email: _email.text,
+                            password: _password.text,
+                            phone: _phone.text,
+                            fname: _fname.text,
+                            lname: _lname.text,
+                            alumniId: _alumniId.text,
+                          );
+                        }
+                        if (widget.signupType == SignupType.corporateDonor) {
+                          await vm.registerCorporate(
+                            email: _email.text,
+                            password: _password.text,
+                            phone: _phone.text,
+                            orgName: _organizationName.text,
+                            rcNumber: _rcNumber.text,
+                            tin: _tin.text,
+                          );
+                        }
+                        if (widget.signupType == SignupType.friendOfIcoba ||
+                            widget.signupType == SignupType.familiesOfIcoba ||
+                            widget.signupType == SignupType.none) {
+                          await vm.registerFriends(
+                            email: _email.text,
+                            password: _password.text,
+                            phone: _phone.text,
+                            fname: _fname.text,
+                            lname: _lname.text,
+                          );
+                        }
+                        if (vm.state == ViewState.retrieved) {
+                          baseBottomSheet(
+                            context: context,
+                            content: AccountVerificationBs(
+                              durationInSeconds: vm.timerDuration,
+                            ),
+                            isDismissible: false,
+                          );
+                        } else {
+                          showFlushBar(
+                            context: context,
+                            message: vm.message,
+                            success: false,
+                          );
+                        }
+                      } else {
+                        showFlushBar(
+                          context: context,
+                          message:
+                              "Password must meet required security strength",
+                          success: false,
+                        );
+                      }
+                    }
+                  },
+                  buttonText: widget.isDonation ? "Continue" : "Sign up",
+                ),
+                SizedBox(height: 32.h),
+              ],
             ),
-            SizedBox(height: 16.h),
-            PasswordRequirement(results: _results),
-            SizedBox(height: 24.h),
-            CustomButton(onPressed: () {}, buttonText: "Sign up"),
-          ],
+          ),
         ),
       ),
     );
@@ -207,16 +484,7 @@ class _SignupState extends State<Signup> {
     setState(() {});
   }
 
-  String userTypeTitle() {
-    switch (widget.signupType) {
-      case SignupType.corporateDonor:
-        return "Corporate Donor Sign Up";
-      case SignupType.alumni:
-        return "Alumni Donor Sign Up";
-      case SignupType.friendOfIcoba:
-        return "Friends of ICOBA Donor Sign Up";
-      case SignupType.familiesOfIcoba:
-        return "Families of ICOBA Donor Sign Up";
-    }
-  }
+  bool allResultsTrue() => _results.every((result) => result);
+
+  String? handleParam(String args) => args.isEmpty ? null : args;
 }

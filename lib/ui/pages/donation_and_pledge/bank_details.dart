@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
+import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/donation_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
 import 'package:icoba_endowment_mobile/ui/pages/donation_and_pledge/successful_donation.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/busy_overlay.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_appbar.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_button.dart';
@@ -13,181 +17,415 @@ import 'package:icoba_endowment_mobile/ui/widgets/custom_scaffold.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/show_flush_bar.dart';
 
-class BankDetails extends StatefulWidget {
-  const BankDetails({super.key});
+import '../../../core/data/enum/contribution_type.dart';
+
+class BankDetails extends ConsumerStatefulWidget {
+  final double amount;
+  final ContributionType contributionType;
+
+  const BankDetails({
+    super.key,
+    required this.amount,
+    this.contributionType = ContributionType.donation,
+  });
 
   @override
-  State<BankDetails> createState() => _BankDetailsState();
+  ConsumerState<BankDetails> createState() => _BankDetailsState();
 }
 
-class _BankDetailsState extends State<BankDetails> {
+class _BankDetailsState extends ConsumerState<BankDetails> {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(donationViewModel).selectedAccount = null;
+      setState(() {});
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final vm = ref.watch(donationViewModel);
 
-    return CustomScaffold(
-      useHorizontalPadding: false,
-      useSafeArea: false,
-      appBar: customAppBar(
-        context: context,
-        title: "Make a donation",
-        useChevLeft: true,
-      ),
-      body: Container(
-        color: ColorPath.athensGrey4,
-        width: double.infinity,
-        height: double.infinity,
-        padding: EdgeInsets.only(left: 16.w, right: 16.w),
-        child: Column(
-          children: [
-            Expanded(
-              child: IcobaContainer(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16.r),
-                  topRight: Radius.circular(16.r),
+    return BusyOverlay(
+      show: vm.donationState == ViewState.busy,
+      child: CustomScaffold(
+        useHorizontalPadding: false,
+        useSafeArea: false,
+        appBar: customAppBar(
+          context: context,
+          title: widget.contributionType == ContributionType.donation
+              ? "Make a donation"
+              : "Make Pledge",
+          useChevLeft: true,
+        ),
+        body: Container(
+          color: ColorPath.athensGrey4,
+          width: double.infinity,
+          height: double.infinity,
+          padding: EdgeInsets.only(left: 16.w, right: 16.w),
+          child: Column(
+            children: [
+              Expanded(
+                child: IcobaContainer(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16.r),
+                    topRight: Radius.circular(16.r),
+                  ),
+                  margin: EdgeInsets.only(top: 16.h),
+                  padding: EdgeInsets.only(top: 16.w, left: 16.w, right: 16.w),
+                  height: double.infinity,
+                  child: vm.initiateTransferResponse == null
+                      ? ListView(
+                          children: [
+                            Text(
+                              "Transfer this exact amount ",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              "${vm.selectedCurrency} ${widget.amount.toStringAsFixed(2)}",
+                              style: textTheme.titleMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              "to any of the account below.",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+
+                            SizedBox(height: 16.h),
+                            Text(
+                              "Select any of the account below to transfer to",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8.h),
+                            ListView.separated(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemBuilder: (context, index) {
+                                final bankAccount = vm.bankAccounts[index];
+                                return Clickable(
+                                  onPressed: () {
+                                    vm.selectedAccount = bankAccount;
+                                    setState(() {});
+                                  },
+                                  child: IcobaContainer(
+                                    padding: EdgeInsets.all(16.w),
+                                    bgColor: ColorPath.athensGrey4,
+                                    border: vm.selectedAccount == bankAccount
+                                        ? Border.all(
+                                            color: ColorPath.brandColor,
+                                          )
+                                        : null,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8.w,
+                                            vertical: 4.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
+                                            color: ColorPath.brandColor,
+                                          ),
+                                          child: Text(
+                                            "${bankAccount.currency} ACCOUNT",
+                                            style: textTheme.bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 10.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: ColorPath.white,
+                                                ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 12.h),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("Bank:"),
+                                            SizedBox(width: 12.w),
+                                            Flexible(
+                                              child: Text(
+                                                vm.bankName,
+                                                textAlign: TextAlign.end,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 6.h),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("Acct Name:"),
+                                            SizedBox(width: 12.w),
+
+                                            Flexible(
+                                              child: Text(
+                                                vm.accountName,
+                                                textAlign: TextAlign.end,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 6.h),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text("Acct No:"),
+                                            SizedBox(width: 12.w),
+
+                                            Expanded(
+                                              child: Text(
+                                                bankAccount.accountNumber ??
+                                                    "N/A",
+                                                textAlign: TextAlign.end,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Clickable(
+                                              onPressed: () {
+                                                Clipboard.setData(
+                                                  ClipboardData(
+                                                    text:
+                                                        bankAccount
+                                                            .accountNumber ??
+                                                        "N/A",
+                                                  ),
+                                                );
+                                                showFlushBar(
+                                                  context: context,
+                                                  message:
+                                                      "Account Number Copied Successfully",
+                                                );
+                                              },
+                                              child: Icon(Icons.copy, size: 16),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                              separatorBuilder: (context, index) =>
+                                  SizedBox(height: 16.h),
+                              itemCount: vm.bankAccounts.length,
+                            ),
+                          ],
+                        )
+                      : ListView(
+                          children: [
+                            Text(
+                              vm.initiateTransferResponse?.instructions ?? "",
+                            ),
+                            SizedBox(height: 12.h),
+                            IcobaContainer(
+                              padding: EdgeInsets.all(16.w),
+                              bgColor: ColorPath.athensGrey4,
+
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      color: ColorPath.brandColor,
+                                    ),
+                                    child: Text(
+                                      "${vm.selectedAccount?.currency} ACCOUNT",
+                                      style: textTheme.bodySmall?.copyWith(
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: ColorPath.white,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Bank:"),
+                                      SizedBox(width: 12.w),
+                                      Flexible(
+                                        child: Text(
+                                          vm.bankName,
+                                          textAlign: TextAlign.end,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Acct Name:"),
+                                      SizedBox(width: 12.w),
+
+                                      Flexible(
+                                        child: Text(
+                                          vm.accountName,
+                                          textAlign: TextAlign.end,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Acct No:"),
+                                      SizedBox(width: 12.w),
+
+                                      Expanded(
+                                        child: Text(
+                                          vm.selectedAccount?.accountNumber ??
+                                              "N/A",
+                                          textAlign: TextAlign.end,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Clickable(
+                                        onPressed: () {
+                                          Clipboard.setData(
+                                            ClipboardData(
+                                              text:
+                                                  vm
+                                                      .selectedAccount
+                                                      ?.accountNumber ??
+                                                  "N/A",
+                                            ),
+                                          );
+                                          showFlushBar(
+                                            context: context,
+                                            message:
+                                                "Account Number Copied Successfully",
+                                          );
+                                        },
+                                        child: Icon(Icons.copy, size: 16),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Transfer Reference:"),
+                                      SizedBox(width: 12.w),
+
+                                      Expanded(
+                                        child: Text(
+                                          vm
+                                                  .initiateTransferResponse
+                                                  ?.bankTransferReference ??
+                                              "N/A",
+                                          textAlign: TextAlign.end,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Clickable(
+                                        onPressed: () {
+                                          Clipboard.setData(
+                                            ClipboardData(
+                                              text:
+                                                  vm
+                                                      .initiateTransferResponse
+                                                      ?.bankTransferReference ??
+                                                  "",
+                                            ),
+                                          );
+                                          showFlushBar(
+                                            context: context,
+                                            message:
+                                                "Reference Copied Successfully",
+                                          );
+                                        },
+                                        child: Icon(Icons.copy, size: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-                margin: EdgeInsets.only(top: 16.h),
-                padding: EdgeInsets.only(top: 16.w, left: 16.w, right: 16.w),
-                height: double.infinity,
-                child: ListView(
+              ),
+              SafeArea(
+                child: Column(
                   children: [
-                    Text(
-                      "Transfer this exact amount ",
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      "₦500,000.00",
-                      style: textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      "to any of the account below.",
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 16.h),
+                    CustomButton(
+                      buttonText: vm.initiateTransferResponse == null
+                          ? "Initiate transfer"
+                          : "I have sent the money",
+                      onPressed: vm.selectedAccount == null
+                          ? null
+                          : () async {
+                              if (vm.initiateTransferResponse == null) {
+                                await vm.initiateBankTransfer(
+                                  amount: widget.amount,
+                                );
 
-                    ListView.separated(
-                      physics: NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        return IcobaContainer(
-                          padding: EdgeInsets.all(16.w),
-                          bgColor: ColorPath.athensGrey4,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w,
-                                  vertical: 4.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  color: ColorPath.brandColor,
-                                ),
-                                child: Text(
-                                  "NAIRA ACCOUNT",
-                                  style: textTheme.bodySmall?.copyWith(
-                                    fontSize: 7.5.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: ColorPath.white,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 12.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Bank:"),
-                                  SizedBox(width: 12.w),
-                                  Flexible(
-                                    child: Text(
-                                      "First City Monument Bank",
-                                      textAlign: TextAlign.end,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 6.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Acct Name:"),
-                                  SizedBox(width: 12.w),
+                                if (vm.donationState == ViewState.error) {
+                                  showFlushBar(
+                                    context: context,
+                                    message: vm.message,
+                                    success: false,
+                                  );
+                                }
 
-                                  Flexible(
-                                    child: Text(
-                                      "IGBOBI COLLEGE ENDOWMENT FUND",
-                                      textAlign: TextAlign.end,
-                                    ),
+                                return;
+                              }
+                              await vm.acknowledgeBankTransfer();
+                              if (vm.donationState == ViewState.retrieved) {
+                                pushNavigation(
+                                  context: context,
+                                  widget: SuccessfulDonation(
+                                    verifyPayment: false,
+                                    contributionType: widget.contributionType,
                                   ),
-                                ],
-                              ),
-                              SizedBox(height: 6.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Acct No:"),
-                                  SizedBox(width: 12.w),
-
-                                  Expanded(
-                                    child: Text(
-                                      "2007877660",
-                                      textAlign: TextAlign.end,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Clickable(
-                                    onPressed: () {
-                                      Clipboard.setData(
-                                        ClipboardData(text: "2007877660"),
-                                      );
-                                      showFlushBar(
-                                        context: context,
-                                        message:
-                                            "Account Number Copied Successfully",
-                                      );
-                                    },
-                                    child: Icon(Icons.copy, size: 16),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      separatorBuilder: (context, index) =>
-                          SizedBox(height: 16.h),
-                      itemCount: 5,
+                                  routeName: NamedRoutes.successfulDonation,
+                                );
+                              } else {
+                                showFlushBar(
+                                  context: context,
+                                  message: vm.message,
+                                  success: false,
+                                );
+                              }
+                            },
                     ),
+                    SizedBox(height: 32.h),
                   ],
                 ),
               ),
-            ),
-            SafeArea(
-              child: CustomButton(
-                buttonText: "I have sent the money",
-                onPressed: () {
-                  pushNavigation(
-                    context: context,
-                    widget: SuccessfulDonation(),
-                    routeName: NamedRoutes.successfulDonation,
-                  );
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

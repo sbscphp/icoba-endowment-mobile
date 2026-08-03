@@ -4,7 +4,8 @@ enum OtpType {
   verifyEmail,
   createAccount,
   forgotTransactionPin,
-  createCustomer
+  createCustomer,
+  twoFA,
 }
 
 enum OtpOptionType{

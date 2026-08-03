@@ -1,34 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/bottom_nav_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/donation_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/extensions/color_extensions.dart';
-import 'package:icoba_endowment_mobile/ui/pages/bottom_nav_screens/home.dart';
-import 'package:icoba_endowment_mobile/ui/pages/bottom_nav_screens/leaderboard.dart';
-import 'package:icoba_endowment_mobile/ui/pages/bottom_nav_screens/portfolio.dart';
-import 'package:icoba_endowment_mobile/ui/pages/bottom_nav_screens/profile.dart';
 
 import '../../core/constants/app_theme/custom_color_scheme.dart';
+import '../../core/data/view_models/user/user_vm.dart';
 import '../widgets/bottom_nav_items.dart';
 
-class BottomNav extends StatefulWidget {
+class BottomNav extends ConsumerStatefulWidget {
   const BottomNav({super.key});
 
   @override
-  State<BottomNav> createState() => _BottomNavState();
+  ConsumerState<BottomNav> createState() => _BottomNavState();
 }
 
-class _BottomNavState extends State<BottomNav> {
-  int currentIndex = 0;
-  List<Widget> screens = [
-    Home(),
-    Leaderboard(),
-    Portfolio(),
-    Profile(),
-  ];
+class _BottomNavState extends ConsumerState<BottomNav> {
+  @override
+  void initState() {
+    final userVm = ref.read(userViewModel);
+    final dashboardVm = ref.read(dashboardViewModel);
+    final donationVm = ref.read(donationViewModel);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      //toggle logged in flag to true
+      // ref.read(inactivityListenerViewModel).userLoggedIn = true;
+
+      //fetch user profile details
+      userVm.getUserProfile();
+
+      //fetch dashboard Details
+      dashboardVm.getDashboardSummary();
+
+      dashboardVm.getTransactions();
+      dashboardVm.getFundsData();
+      userVm.getRecognitions();
+      donationVm.getPledges();
+    });
+    //init push notification listeners
+    //FirebaseMessagingUtils.pushNotificationListenerInit(context: context);
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    // final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final vm = ref.watch(bottomNavViewModel);
 
     return PopScope(
       canPop: false,
@@ -39,34 +61,6 @@ class _BottomNavState extends State<BottomNav> {
       },
       child: Scaffold(
         extendBody: true,
-        // extendBodyBehindAppBar: false,
-        // appBar: AppBar(
-        //   title: Row(
-        //     children: [
-        //       Text(
-        //         "Home",
-        //         style: textTheme.bodyLarge?.copyWith(
-        //           fontWeight: FontWeight.bold,
-        //           fontSize: 18.sp,
-        //         ),
-        //       ),
-        //     ],
-        //   ),
-        //   centerTitle: false,
-
-        //   actions: [
-        //     CustomAssetViewer(asset: AppAsset.notification),
-        //     SizedBox(width: 8.w),
-        //     DisplayImage(
-        //       image: null,
-        //       firstName: "A",
-        //       lastName: "B",
-        //       size: 28,
-        //       fontSize: 10.sp,
-        //     ),
-        //     SizedBox(width: 16.w),
-        //   ],
-        // ),
         bottomNavigationBar: Padding(
           padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 32.h),
           child: Container(
@@ -86,14 +80,13 @@ class _BottomNavState extends State<BottomNav> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(bottomNavItems().length, (index) {
                 final item = bottomNavItems()[index];
-                final isSelected = currentIndex == index;
+                final isSelected = vm.currentIndex == index;
 
                 return Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        currentIndex = index;
-                      });
+                      vm.setCurrentIndex(index);
+                      setState(() {});
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Container(
@@ -148,7 +141,7 @@ class _BottomNavState extends State<BottomNav> {
             ),
           ),
         ),
-        body: IndexedStack(index: currentIndex, children: screens),
+        body: IndexedStack(index: vm.currentIndex, children: vm.screens),
         // Container(
         //   color: ColorPath.athensGrey4,
         //   width: double.infinity,

@@ -10,6 +10,7 @@ import 'package:icoba_endowment_mobile/ui/widgets/home/cta_card.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
 
 import '../../../core/constants/app_asset.dart';
+import '../../../core/data/enum/contribution_type.dart';
 
 class QuickLinks extends ConsumerWidget {
   const QuickLinks({super.key});
@@ -53,7 +54,9 @@ class QuickLinks extends ConsumerWidget {
                   onPressed: () {
                     pushNavigation(
                       context: context,
-                      widget: ContributionAmount(),
+                      widget: ContributionAmount(
+                        contributionType: ContributionType.pledge,
+                      ),
                       routeName: NamedRoutes.contributionAmount,
                     );
                   },
