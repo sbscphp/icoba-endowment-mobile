@@ -38,6 +38,7 @@ class CustomTextField extends StatefulWidget {
   final Color? borderColor;
   final double? borderWidth;
   final bool useDefaultHeight;
+  final Widget? toolTip;
 
   const CustomTextField({
     super.key,
@@ -72,6 +73,7 @@ class CustomTextField extends StatefulWidget {
     this.borderColor,
     this.borderWidth,
     this.useDefaultHeight = true,
+    this.toolTip,
   });
 
   @override
@@ -129,6 +131,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     fontSize: widget.labelSize,
                     fontWeight: FontWeight.w500,
                   ),
+                ),
+              if (widget.toolTip != null)
+                Row(
+                  children: [
+                    SizedBox(width: 4.w),
+                    widget.toolTip!,
+                  ],
                 ),
             ],
           ),

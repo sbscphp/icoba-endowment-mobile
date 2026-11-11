@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/bottom_nav_vm.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/leaderboard_vm.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_tab_bar.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/display_image.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/leaderboard_donations.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/leaderboard_pledges.dart';
 // import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
 
-import '../../../core/data/enum/view_state.dart';
 import '../../../core/data/view_models/user/user_vm.dart';
 import '../../widgets/notification_icon.dart';
 
@@ -37,19 +36,19 @@ class _LeaderboardState extends ConsumerState<Leaderboard>
   }
 
   void _fetchData() {
-    final dashboardVm = ref.read(dashboardViewModel);
+    final leaderboardVm = ref.read(leaderboardViewModel);
 
     //fetch leaderboard DONATIONS Donors
-    dashboardVm.getLeaderBoardDonors();
+    leaderboardVm.getLeaderBoardDonors();
 
     //fetch leaderboard DONATIONS sets
-    dashboardVm.getLeaderBoardSets(sortDirection: 'desc');
+    leaderboardVm.getLeaderBoardSets(sortDirection: 'desc');
 
     //fetch leaderboard PLEDGES Donors[pledges]
-    dashboardVm.getLeaderBoardDonors(scope: "pledges");
+    leaderboardVm.getLeaderBoardDonors(scope: "pledges");
 
     //fetch leaderboard PLEDGES sets[pledges]
-    dashboardVm.getLeaderBoardSets(scope: "pledges", sortDirection: 'desc');
+    leaderboardVm.getLeaderBoardSets(scope: "pledges", sortDirection: 'desc');
   }
 
   @override

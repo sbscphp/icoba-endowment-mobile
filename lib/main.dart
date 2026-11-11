@@ -13,18 +13,18 @@ import 'core/utilities/secure_storage/secure_storage_init.dart';
 import 'locator.dart';
 import 'router.dart' as router;
 import 'ui/pages/splash.dart';
-
+//P@@@ssword@123 -> eddy@yopmail.com
 // Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 //   if (message.notification != null) {}
 // }
 
-void main() async {
+void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
   await ScreenUtil.ensureScreenSize();
   //await Firebase.initializeApp();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  AppConfig.setEnvironment(Environment.staging);
+  AppConfig.setEnvironment(Environment.prod);
   //await CountryUtils.readCountryJson();
   SecureStorageInit.initSecureStorage();
   setupLocator();

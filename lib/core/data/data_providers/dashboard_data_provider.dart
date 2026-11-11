@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:icoba_endowment_mobile/core/data/models/data/pagination_data.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/event_model.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/leader_board_house_data.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/recent_donor.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/transaction_data.dart';
 
@@ -113,6 +115,63 @@ class DashboardDataProvider {
           data,
           (item) => TransactionData.fromJson(item),
         ),
+      );
+      completer.complete(result);
+    } catch (e) {
+      completer.completeError(e);
+    }
+    return completer.future;
+  }
+
+  ///get [Events] ✅
+  Future<ApiResponse<PaginationData<EventModel>>> getEvents({
+    String? search,
+    int? page,
+  }) async {
+    var completer = Completer<ApiResponse<PaginationData<EventModel>>>();
+    try {
+      Map<String, dynamic> response = await NetworkManager()
+          .networkRequestManager(
+            RequestType.get,
+            ApiRoutes.events,
+            queryParameters: {"search": search, "page": page ?? 1},
+          );
+
+      final decryptedString = aesDecrypt(response["response"]);
+
+      final parsedData = jsonDecode(decryptedString);
+
+      var result = ApiResponse<PaginationData<EventModel>>.fromJson(
+        parsedData,
+        (data) => PaginationData<EventModel>.fromJson(
+          data,
+          (item) => EventModel.fromJson(item),
+        ),
+      );
+      completer.complete(result);
+    } catch (e) {
+      completer.completeError(e);
+    }
+    return completer.future;
+  }
+
+  ///get single [Event] ✅
+  Future<ApiResponse<EventModel>> getSingleEvent({String? eventID}) async {
+    var completer = Completer<ApiResponse<EventModel>>();
+    try {
+      Map<String, dynamic> response = await NetworkManager()
+          .networkRequestManager(
+            RequestType.get,
+            ApiRoutes.viewEvent(eventID ?? ""),
+          );
+
+      final decryptedString = aesDecrypt(response["response"]);
+
+      final parsedData = jsonDecode(decryptedString);
+
+      var result = ApiResponse<EventModel>.fromJson(
+        parsedData,
+        (data) => EventModel.fromJson(data),
       );
       completer.complete(result);
     } catch (e) {
@@ -239,6 +298,50 @@ class DashboardDataProvider {
         (data) => PaginationData<LeaderBoardSetData>.fromJson(
           data,
           (item) => LeaderBoardSetData.fromJson(item),
+        ),
+      );
+      completer.complete(result);
+    } catch (e) {
+      completer.completeError(e);
+    }
+    return completer.future;
+  }
+
+    ///get [Leader Board Houses] ✅
+  Future<ApiResponse<PaginationData<LeaderBoardHouseData>>> getLeaderBoardHouses({
+    String? search,
+    String? scope = "donations", //default
+    int? page,
+    String? sortDirection = "asc",
+    String? sortBy = "amount",
+  }) async {
+    var completer =
+        Completer<ApiResponse<PaginationData<LeaderBoardHouseData>>>();
+    try {
+      Map<String, dynamic> response = await NetworkManager()
+          .networkRequestManager(
+            RequestType.get,
+            ApiRoutes.leaderBoardHouses,
+            useAuth: false,
+            // body: jsonEncode(details),
+            queryParameters: {
+              "search": search,
+              "scope": scope,
+              "page": page ?? 1,
+              "sort_dir": sortDirection,
+              "sort_by": sortBy,
+            },
+          );
+
+      final decryptedString = aesDecrypt(response["response"]);
+
+      final parsedData = jsonDecode(decryptedString);
+
+      var result = ApiResponse<PaginationData<LeaderBoardHouseData>>.fromJson(
+        parsedData,
+        (data) => PaginationData<LeaderBoardHouseData>.fromJson(
+          data,
+          (item) => LeaderBoardHouseData.fromJson(item),
         ),
       );
       completer.complete(result);

@@ -201,4 +201,34 @@ class UserDataProvider {
     }
     return completer.future;
   }
+
+  ///deletes User Account Data ✅
+  Future<ApiResponse<DefaultResponse>> deleteAccount({
+    required Map<String, dynamic> details,
+  }) async {
+    var completer = Completer<ApiResponse<DefaultResponse>>();
+    try {
+      final encryptedPayload = aesEncrypt(jsonEncode(details));
+      Map<String, dynamic> response = await NetworkManager()
+          .networkRequestManager(
+            RequestType.post,
+            ApiRoutes.deleteAccount,
+            useAuth: true,
+            body: jsonEncode({'payload': encryptedPayload}),
+          );
+
+      final decryptedString = aesDecrypt(response["response"]);
+
+      final parsedData = jsonDecode(decryptedString);
+
+      var result = ApiResponse<DefaultResponse>.fromJson(
+        parsedData,
+        (data) => DefaultResponse.fromJson(data as Map<String, dynamic>),
+      );
+      completer.complete(result);
+    } catch (e) {
+      completer.completeError(e);
+    }
+    return completer.future;
+  }
 }

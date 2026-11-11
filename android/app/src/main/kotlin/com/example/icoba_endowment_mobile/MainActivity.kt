@@ -1,4 +1,4 @@
-package com.example.icoba_endowment_mobile
+package com.icoba.endowment
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

@@ -1,133 +1,22 @@
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icoba_endowment_mobile/core/data/data_providers/dashboard_data_provider.dart';
-import 'package:icoba_endowment_mobile/core/data/models/response_data/recent_donor.dart';
-import 'package:icoba_endowment_mobile/core/data/states/base_state.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/leader_board_house_data.dart';
+import 'package:icoba_endowment_mobile/core/data/states/dashboard_state.dart';
 
-import '../../../locator.dart';
-import '../../constants/app_constants.dart';
-import '../../utilities/utilities.dart';
-import '../enum/view_state.dart';
-import '../models/response_data/campaign_fund_data.dart';
-import '../models/response_data/dashboard_summary.dart';
-import '../models/response_data/leader_board_donor_data.dart';
-import '../models/response_data/leader_board_set_data.dart';
-import '../models/response_data/transaction_data.dart';
+import '../../../../locator.dart';
+import '../../../constants/app_constants.dart';
+import '../../../utilities/utilities.dart';
+import '../../enum/view_state.dart';
+import '../../models/response_data/leader_board_donor_data.dart';
+import '../../models/response_data/leader_board_set_data.dart';
 
-class DashboardVm extends BaseState {
+class LeaderboardVm extends DashboardState {
   final DashboardDataProvider _dataProvider = locator<DashboardDataProvider>();
 
   //message
   String _message = '';
   String get message => _message;
-
-  DashboardSummary? _dashboardSummary;
-  int get donationCount => _dashboardSummary?.donationCount ?? 0;
-  String get currency => _dashboardSummary?.currencyPreview ?? "NGN";
-
-  double get totalDonation =>
-      double.tryParse(_dashboardSummary?.totalDonationsAmountNgn ?? '0') ?? 0;
-  double get totalPledges =>
-      double.tryParse(_dashboardSummary?.pledgesCommittedAmountNgn ?? '0') ?? 0;
-
-  Future<void> getDashboardSummary() async {
-    setDashboardState(ViewState.busy);
-
-    // details.removeWhere((key, value) => value == null);
-
-    await _dataProvider
-        .getDashboardSummary()
-        .then((response) async {
-          _message = response.message ?? defaultSuccessMessage;
-          _dashboardSummary = response.data;
-          setDashboardState(ViewState.retrieved);
-        })
-        .catchError((e) {
-          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
-          setDashboardState(ViewState.error);
-        });
-  }
-
-  List<TransactionData> _transactions = [];
-  List<TransactionData> get transactions => _transactions;
-
-  int transactionPage = 1;
-  int transactionTotal = 0;
-
-  Future<void> getTransactions({bool firstCall = true}) async {
-    if (firstCall) {
-      transactionPage = 1;
-      setDashboardState(ViewState.busy);
-    } else {
-      setPaginatedState(ViewState.busy);
-    }
-
-    // details.removeWhere((key, value) => value == null);
-
-    await _dataProvider
-        .getTransactions(page: transactionPage)
-        .then((response) async {
-          _message = response.message ?? defaultSuccessMessage;
-          if (firstCall) {
-            _transactions = response.data?.data ?? [];
-            transactionPage++;
-            transactionTotal = response.data?.total ?? 0;
-            setDashboardState(ViewState.retrieved);
-          } else {
-            _transactions.addAll(response.data?.data ?? []);
-            transactionPage++;
-            setPaginatedState(ViewState.retrieved);
-          }
-        })
-        .catchError((e) {
-          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
-          if (firstCall) {
-            setDashboardState(ViewState.error);
-          } else {
-            setPaginatedState(ViewState.error);
-          }
-        });
-  }
-
-  List<RecentDonor> _donors = [];
-  List<RecentDonor> get donors => _donors;
-
-  int recdonPage = 1;
-  int recdonTotal = 0;
-
-  Future<void> getRecentDonations({bool firstCall = true}) async {
-    if (firstCall) {
-      // recdonPage = 1;
-      setDashboardState(ViewState.busy);
-    } else {
-      setPaginatedState(ViewState.busy);
-    }
-
-    // details.removeWhere((key, value) => value == null);
-
-    await _dataProvider
-        .getRecentDonations()
-        .then((response) async {
-          _message = response.message ?? defaultSuccessMessage;
-          if (firstCall) {
-            _donors = response.data ?? [];
-            // recdonPage++;
-            // transactionTotal = response.data?.total ?? 0;
-            setDashboardState(ViewState.retrieved);
-          } else {
-            _donors.addAll(response.data ?? []);
-            // recdonPage++;
-            setPaginatedState(ViewState.retrieved);
-          }
-        })
-        .catchError((e) {
-          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
-          if (firstCall) {
-            setDashboardState(ViewState.error);
-          } else {
-            setPaginatedState(ViewState.error);
-          }
-        });
-  }
 
   String _selectedDonationViewType = "";
   String get selectedDonationViewType => _selectedDonationViewType;
@@ -141,27 +30,6 @@ class DashboardVm extends BaseState {
   set selectedPledgeViewType(String value) {
     _selectedPledgeViewType = value;
     notifyListeners();
-  }
-
-  List<CampaignFundData> _fundsData = [];
-  List<CampaignFundData> get fundsData => _fundsData;
-
-  Future<void> getFundsData() async {
-    setDashboardState(ViewState.busy);
-
-    // details.removeWhere((key, value) => value == null);
-
-    await _dataProvider
-        .getFundsData()
-        .then((response) async {
-          _message = response.message ?? defaultSuccessMessage;
-          _fundsData = response.data ?? [];
-          setDashboardState(ViewState.retrieved);
-        })
-        .catchError((e) {
-          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
-          setDashboardState(ViewState.error);
-        });
   }
 
   List<LeaderBoardDonorData> _leaderBoardDonors = [];
@@ -191,7 +59,7 @@ class DashboardVm extends BaseState {
       } else {
         donorPledgePage = 1;
       }
-      setLeaderboardState(ViewState.busy);
+      setState(ViewState.busy);
     } else {
       if (isSearch) {
         donorDonationPage = 1;
@@ -222,7 +90,7 @@ class DashboardVm extends BaseState {
               donorPledgetotal = response.data?.total ?? 0;
             }
             if (isSearch) setPaginatedState(ViewState.retrieved);
-            setLeaderboardState(ViewState.retrieved);
+            setState(ViewState.retrieved);
           } else {
             //add to list
             if (scope == "donations") {
@@ -240,7 +108,7 @@ class DashboardVm extends BaseState {
         .catchError((e) {
           _message = Utilities.formatMessage(e.toString(), isSuccess: false);
           if (firstCall) {
-            setLeaderboardState(ViewState.error);
+            setState(ViewState.error);
           } else {
             setPaginatedState(ViewState.error);
           }
@@ -264,6 +132,18 @@ class DashboardVm extends BaseState {
   LeaderBoardSetData? setPledgeTwo;
   LeaderBoardSetData? setPledgeThree;
 
+  List<LeaderBoardSetData> sortByFulfilledAmountAscending(
+    List<LeaderBoardSetData> data,
+  ) {
+    final sorted = List<LeaderBoardSetData>.from(data);
+    sorted.sort((a, b) {
+      final aValue = double.tryParse(a.fulfilledAmountNgn ?? '0') ?? 0.0;
+      final bValue = double.tryParse(b.fulfilledAmountNgn ?? '0') ?? 0.0;
+      return bValue.compareTo(aValue); // b vs a instead of a vs b
+    });
+    return sorted;
+  }
+
   //pagination details
   int setPledgePage = 1;
   int setDonationPage = 1;
@@ -284,7 +164,7 @@ class DashboardVm extends BaseState {
       } else {
         setPledgePage = 1;
       }
-      setLeaderboardState(ViewState.busy);
+      setSecondState(ViewState.busy);
     } else {
       if (isSearch) {
         setDonationPage = 1;
@@ -325,13 +205,19 @@ class DashboardVm extends BaseState {
               if (_leaderBoardSetsPledges.isNotEmpty &&
                   _leaderBoardSetsPledges.length > 3 &&
                   !isSearch) {
-                setPledgeOne = _leaderBoardSetsPledges[0];
-                setPledgeTwo = _leaderBoardSetsPledges[1];
-                setPledgeThree = _leaderBoardSetsPledges[2];
+                setPledgeOne = sortByFulfilledAmountAscending(
+                  _leaderBoardSetsPledges,
+                )[0];
+                setPledgeTwo = sortByFulfilledAmountAscending(
+                  _leaderBoardSetsPledges,
+                )[1];
+                setPledgeThree = sortByFulfilledAmountAscending(
+                  _leaderBoardSetsPledges,
+                )[2];
               }
             }
             if (isSearch) setPaginatedState(ViewState.retrieved);
-            setLeaderboardState(ViewState.retrieved);
+            setSecondState(ViewState.retrieved);
           } else {
             //add to list
             if (scope == "donations") {
@@ -349,7 +235,90 @@ class DashboardVm extends BaseState {
         .catchError((e) {
           _message = Utilities.formatMessage(e.toString(), isSuccess: false);
           if (firstCall) {
-            setLeaderboardState(ViewState.error);
+            setSecondState(ViewState.error);
+          } else {
+            setPaginatedState(ViewState.error);
+          }
+        });
+  }
+
+  List<LeaderBoardHouseData> _leaderBoardHouses = [];
+  List<LeaderBoardHouseData> get leaderBoardHouses => _leaderBoardHouses;
+
+  List<LeaderBoardHouseData> _leaderBoardHousesPledges = [];
+  List<LeaderBoardHouseData> get leaderBoardHousesPledges =>
+      _leaderBoardHousesPledges;
+
+  //pagination details
+  int housePledgePage = 1;
+  int houseDonationPage = 1;
+
+  int housePledgetotal = 0;
+  int houseDonationtotal = 0;
+  //?GETS LEADERBOARD SETS
+  Future<void> getLeaderBoardHouses({
+    String? scope = "donations", //??DONATIONS??PLEDGES??ALL
+    String? sortDirection = 'asc',
+    bool firstCall = true,
+    bool isSearch = false,
+    String? searchQuery,
+  }) async {
+    if (firstCall) {
+      if (scope == "donations") {
+        houseDonationPage = 1;
+      } else {
+        housePledgePage = 1;
+      }
+      setThirdState(ViewState.busy);
+    } else {
+      if (isSearch) {
+        houseDonationPage = 1;
+        housePledgePage = 1;
+      }
+      setPaginatedState(ViewState.busy);
+    }
+
+    // details.removeWhere((key, value) => value == null);
+
+    await _dataProvider
+        .getLeaderBoardHouses(
+          scope: scope,
+          search: searchQuery,
+          sortDirection: sortDirection,
+          page: scope == "donations" ? houseDonationPage : housePledgePage,
+        )
+        .then((response) async {
+          _message = response.message ?? defaultSuccessMessage;
+          if (firstCall || isSearch) {
+            if (scope == "donations") {
+              _leaderBoardHouses = response.data?.data ?? [];
+              houseDonationPage++;
+              setDonationtotal = response.data?.total ?? 0;
+            } else {
+              _leaderBoardHousesPledges = response.data?.data ?? [];
+              housePledgePage++;
+              housePledgetotal = response.data?.total ?? 0;
+            }
+            if (isSearch) setPaginatedState(ViewState.retrieved);
+            setThirdState(ViewState.retrieved);
+          } else {
+            //add to list
+            if (scope == "donations") {
+              _leaderBoardHouses.addAll(List.from(response.data?.data ?? []));
+              houseDonationPage++;
+            } else {
+              _leaderBoardHousesPledges.addAll(
+                List.from(response.data?.data ?? []),
+              );
+              housePledgePage++;
+            }
+            setPaginatedState(ViewState.retrieved);
+          }
+        })
+        .catchError((e) {
+          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
+          if (firstCall) {
+            setThirdState(ViewState.error);
           } else {
             setPaginatedState(ViewState.error);
           }
@@ -357,6 +326,6 @@ class DashboardVm extends BaseState {
   }
 }
 
-final dashboardViewModel = ChangeNotifierProvider<DashboardVm>((ref) {
-  return DashboardVm();
+final leaderboardViewModel = ChangeNotifierProvider<LeaderboardVm>((ref) {
+  return LeaderboardVm();
 });

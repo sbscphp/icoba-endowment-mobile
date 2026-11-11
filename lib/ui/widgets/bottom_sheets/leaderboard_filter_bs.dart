@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/leaderboard_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_button.dart';
@@ -21,7 +21,7 @@ class LeaderboardFilterBs extends ConsumerStatefulWidget {
 class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
   @override
   Widget build(BuildContext context) {
-    final dashboardVm = ref.watch(dashboardViewModel);
+    final leaderboardVm = ref.watch(leaderboardViewModel);
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -39,11 +39,11 @@ class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
                 child: Clickable(
                   onPressed: () {
                     setState(() {
-                      dashboardVm.selectedDonationViewType = "donors";
+                      leaderboardVm.selectedDonationViewType = "donors";
                     });
                   },
                   child: IcobaContainer(
-                    bgColor: dashboardVm.selectedDonationViewType == "donors"
+                    bgColor: leaderboardVm.selectedDonationViewType == "donors"
                         ? ColorPath.iceBlue
                         : null,
                     padding: EdgeInsets.symmetric(
@@ -51,7 +51,7 @@ class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
                       horizontal: 12.w,
                     ),
                     border: Border.all(
-                      color: dashboardVm.selectedDonationViewType == "donors"
+                      color: leaderboardVm.selectedDonationViewType == "donors"
                           ? ColorPath.brandColor
                           : ColorPath.athensGrey4,
                     ),
@@ -65,11 +65,11 @@ class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
                 child: Clickable(
                   onPressed: () {
                     setState(() {
-                      dashboardVm.selectedDonationViewType = "sets";
+                      leaderboardVm.selectedDonationViewType = "sets";
                     });
                   },
                   child: IcobaContainer(
-                    bgColor: dashboardVm.selectedDonationViewType == "sets"
+                    bgColor: leaderboardVm.selectedDonationViewType == "sets"
                         ? ColorPath.iceBlue
                         : null,
                     padding: EdgeInsets.symmetric(
@@ -77,7 +77,7 @@ class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
                       horizontal: 12.w,
                     ),
                     border: Border.all(
-                      color: dashboardVm.selectedDonationViewType == "sets"
+                      color: leaderboardVm.selectedDonationViewType == "sets"
                           ? ColorPath.brandColor
                           : ColorPath.athensGrey4,
                     ),
@@ -85,6 +85,38 @@ class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
                   ),
                 ),
               ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: Clickable(
+                  onPressed: () {
+                    setState(() {
+                      leaderboardVm.selectedDonationViewType = "houses";
+                    });
+                  },
+                  child: IcobaContainer(
+                    bgColor: leaderboardVm.selectedDonationViewType == "houses"
+                        ? ColorPath.iceBlue
+                        : null,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 12.h,
+                      horizontal: 12.w,
+                    ),
+                    border: Border.all(
+                      color: leaderboardVm.selectedDonationViewType == "houses"
+                          ? ColorPath.brandColor
+                          : ColorPath.athensGrey4,
+                    ),
+                    child: Text("Houses"),
+                  ),
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+              Expanded(child: SizedBox()),
             ],
           ),
 
@@ -102,9 +134,6 @@ class _LeaderboardFilterBsState extends ConsumerState<LeaderboardFilterBs> {
   }
 }
 
-
-
-
 ///Pledge
 class LeaderboardPledgeFilterBs extends ConsumerStatefulWidget {
   const LeaderboardPledgeFilterBs({super.key});
@@ -114,10 +143,11 @@ class LeaderboardPledgeFilterBs extends ConsumerStatefulWidget {
       _LeaderboardPledgeFilterBsState();
 }
 
-class _LeaderboardPledgeFilterBsState extends ConsumerState<LeaderboardPledgeFilterBs> {
+class _LeaderboardPledgeFilterBsState
+    extends ConsumerState<LeaderboardPledgeFilterBs> {
   @override
   Widget build(BuildContext context) {
-    final dashboardVm = ref.watch(dashboardViewModel);
+    final leaderboardVm = ref.watch(leaderboardViewModel);
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -135,11 +165,11 @@ class _LeaderboardPledgeFilterBsState extends ConsumerState<LeaderboardPledgeFil
                 child: Clickable(
                   onPressed: () {
                     setState(() {
-                      dashboardVm.selectedPledgeViewType = "donors";
+                      leaderboardVm.selectedPledgeViewType = "donors";
                     });
                   },
                   child: IcobaContainer(
-                    bgColor: dashboardVm.selectedPledgeViewType == "donors"
+                    bgColor: leaderboardVm.selectedPledgeViewType == "donors"
                         ? ColorPath.iceBlue
                         : null,
                     padding: EdgeInsets.symmetric(
@@ -147,7 +177,7 @@ class _LeaderboardPledgeFilterBsState extends ConsumerState<LeaderboardPledgeFil
                       horizontal: 12.w,
                     ),
                     border: Border.all(
-                      color: dashboardVm.selectedPledgeViewType == "donors"
+                      color: leaderboardVm.selectedPledgeViewType == "donors"
                           ? ColorPath.brandColor
                           : ColorPath.athensGrey4,
                     ),
@@ -161,11 +191,11 @@ class _LeaderboardPledgeFilterBsState extends ConsumerState<LeaderboardPledgeFil
                 child: Clickable(
                   onPressed: () {
                     setState(() {
-                      dashboardVm.selectedPledgeViewType = "sets";
+                      leaderboardVm.selectedPledgeViewType = "sets";
                     });
                   },
                   child: IcobaContainer(
-                    bgColor: dashboardVm.selectedPledgeViewType == "sets"
+                    bgColor: leaderboardVm.selectedPledgeViewType == "sets"
                         ? ColorPath.iceBlue
                         : null,
                     padding: EdgeInsets.symmetric(
@@ -173,7 +203,7 @@ class _LeaderboardPledgeFilterBsState extends ConsumerState<LeaderboardPledgeFil
                       horizontal: 12.w,
                     ),
                     border: Border.all(
-                      color: dashboardVm.selectedPledgeViewType == "sets"
+                      color: leaderboardVm.selectedPledgeViewType == "sets"
                           ? ColorPath.brandColor
                           : ColorPath.athensGrey4,
                     ),
@@ -181,6 +211,38 @@ class _LeaderboardPledgeFilterBsState extends ConsumerState<LeaderboardPledgeFil
                   ),
                 ),
               ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: Clickable(
+                  onPressed: () {
+                    setState(() {
+                      leaderboardVm.selectedPledgeViewType = "houses";
+                    });
+                  },
+                  child: IcobaContainer(
+                    bgColor: leaderboardVm.selectedPledgeViewType == "houses"
+                        ? ColorPath.iceBlue
+                        : null,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 12.h,
+                      horizontal: 12.w,
+                    ),
+                    border: Border.all(
+                      color: leaderboardVm.selectedPledgeViewType == "houses"
+                          ? ColorPath.brandColor
+                          : ColorPath.athensGrey4,
+                    ),
+                    child: Text("Houses"),
+                  ),
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+              Expanded(child: SizedBox()),
             ],
           ),
 

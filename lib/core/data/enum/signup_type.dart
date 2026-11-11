@@ -1,1 +1,1 @@
-enum SignupType { alumni, corporateDonor, friendOfIcoba, familiesOfIcoba, none }
+enum SignupType { alumni, corporateDonor, friendOfIcoba, familiesOfIcoba, wives, none }

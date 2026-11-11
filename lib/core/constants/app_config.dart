@@ -31,33 +31,26 @@ class AppConfig {
     return _config[_BaseUrlConfig.baseUrl];
   }
 
-  static get payStackKey {
-    return _config[_BaseUrlConfig.payStackKey];
-  }
+
 }
 
 class _BaseUrlConfig {
   static const baseUrl = 'BaseUrl';
-  static const payStackKey = 'PayStackPublicKey';
 
   static Map<String, dynamic> debugConstants = {
     baseUrl: Env.debugBaseUrl,
-    // payStackKey: dotenv.env['DEBUG_PAY_STACK_KEY'],
   };
 
   static Map<String, dynamic> stagingConstants = {
     baseUrl: Env.stagingBaseUrl,
-    // payStackKey: dotenv.env['STAGING_PAY_STACK_KEY'],
   };
 
   static Map<String, dynamic> qaConstants = {
     baseUrl: Env.qaBaseUrl,
-    // payStackKey: dotenv.env['QA_PAY_STACK_KEY'],
   };
 
   static Map<String, dynamic> prodConstants = {
     baseUrl: Env.productionBaseUrl,
-    // payStackKey: dotenv.env['PROD_PAY_STACK_KEY'],
   };
 
 }

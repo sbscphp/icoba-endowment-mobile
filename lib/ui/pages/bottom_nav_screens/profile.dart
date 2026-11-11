@@ -6,11 +6,14 @@ import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_sch
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/user/delete_account_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
 import 'package:icoba_endowment_mobile/core/utilities/secure_storage/secure_storage_utils.dart';
 import 'package:icoba_endowment_mobile/ui/pages/authentication/forgot_password.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/base_bottom_sheet.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/delete_account_bs.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/logout_bs.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/busy_overlay.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_button.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_scaffold.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/display_image.dart';
@@ -32,389 +35,438 @@ class _ProfileState extends ConsumerState<Profile> {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final userVm = ref.watch(userViewModel);
+    final deleteProfileVm = ref.watch(deleteAccountViewModel);
 
-    return CustomScaffold(
-      useHorizontalPadding: false,
-      useSafeArea: false,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        title: Row(
-          children: [
-            Text(
-              "Profile & Settings",
-              style: textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 18.sp,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: false,
-      ),
-      body: Container(
-        color: ColorPath.athensGrey4,
-        width: double.infinity,
-        height: double.infinity,
-        padding: EdgeInsets.only(left: 16.w, right: 16.w),
-        child: RefreshIndicator(
-          onRefresh: () async {
-            userVm.getUserProfile();
-          },
-          child: ListView(
-            padding: EdgeInsets.only(top: 24.h, bottom: 24.h),
+    return BusyOverlay(
+      show: deleteProfileVm.state == ViewState.busy,
+      child: CustomScaffold(
+        useHorizontalPadding: false,
+        useSafeArea: false,
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          title: Row(
             children: [
-              //INFO CARD
-              IcobaContainer(
-                padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        DisplayImage(
-                          image: null,
-                          firstName: userVm.firstName,
-                          lastName: userVm.lastName,
-                          size: 56,
-                          fontSize: 10.sp,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                userVm.fullName,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.textPrimary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                "${userVm.email}\n${userVm.isOrganization
-                                    ? "Corporate Donor"
-                                    : userVm.setName == "N/A"
-                                    ? ""
-                                    : "${userVm.setName} set"}",
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.textTertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (userVm.tierBadgeUrl.isNotEmpty)
-                          Image.network(
-                            userVm.tierBadgeUrl,
-                            height: 56.h,
-                            width: 56.w,
-                          ),
-                        // CustomAssetViewer(
-                        //   asset: AppAsset.bronzeBadge,
-                        //   height: 56.h,
-                        //   width: 56.w,
-                        //   useColorFilter: false,
-                        // ),
-                      ],
-                    ),
-                  ],
+              Text(
+                "Profile & Settings",
+                style: textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18.sp,
                 ),
               ),
-              //PROFILE INFO CARD
-              IcobaContainer(
-                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
-                margin: EdgeInsets.only(top: 16.h),
-                bgColor: colorScheme.whiteText,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Profile",
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Divider(color: ColorPath.athensGrey8),
-                    SizedBox(height: 12.h),
-                    //Org
-                    // InfoText(title: "Organization", data: "WEMA BANK"),
-                    // SizedBox(height: 12.h),
-                    // InfoText(title: "Industry", data: "Banking Industry"),
-                    // SizedBox(height: 12.h),
-                    // InfoText(title: "Official email", data: Don"crs@wema.com"),
-                    // SizedBox(height: 12.h),
-                    // InfoText(title: "Phone number", data: "+2348098765432"),
-                    // SizedBox(height: 12.h),
-                    // InfoText(
-                    //   title: "OContact person",
-                    //   data: "Sheriff Olusanya Jacobs",
-                    // ),
-                    // SizedBox(height: 12.h),
-                    //personal
-                    InfoText(title: "Name", data: userVm.fullName),
-                    SizedBox(height: 12.h),
-                    if (!userVm.isOrganization)
-                      InfoText(
-                        title: "Set",
-                        data:
-                            "${userVm.setName == "N/A" ? "0000" : userVm.setName} set",
-                      ),
-                    if (!userVm.isOrganization) SizedBox(height: 12.h),
-                    InfoText(title: "Email", data: userVm.email),
-                    SizedBox(height: 12.h),
-                    InfoText(title: "Phone number", data: userVm.phone),
-                    SizedBox(height: 12.h),
-                  ],
-                ),
-              ),
-              //SECURITY CARD
-              IcobaContainer(
-                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
-                margin: EdgeInsets.only(top: 16.h),
-                bgColor: colorScheme.whiteText,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Security",
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Divider(color: ColorPath.athensGrey8),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InfoText(
-                            title: "Password",
-                            data: "******************",
+            ],
+          ),
+          centerTitle: false,
+        ),
+        body: Container(
+          color: ColorPath.athensGrey4,
+          width: double.infinity,
+          height: double.infinity,
+          padding: EdgeInsets.only(left: 16.w, right: 16.w),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              userVm.getUserProfile();
+            },
+            child: ListView(
+              padding: EdgeInsets.only(top: 24.h, bottom: 24.h),
+              children: [
+                //INFO CARD
+                IcobaContainer(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 16.h,
+                    horizontal: 12.w,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          DisplayImage(
+                            image: null,
+                            firstName: userVm.firstName,
+                            lastName: userVm.lastName,
+                            size: 56,
+                            fontSize: 10.sp,
                           ),
-                        ),
-                        CustomButton(
-                          onPressed: () {
-                            pushNavigation(
-                              context: context,
-                              widget: ForgotPassword(
-                                step: 2,
-                                isPasswordReset: true,
-                              ),
-                              routeName: NamedRoutes.forgotPassword,
-                            );
-                          },
-                          buttonWidth: 70,
-                          buttonHeight: 35,
-                          buttonText: "Edit",
-                          buttonTextColor: colorScheme.textPrimary,
-                          buttonTextSize: 16.sp,
-                          borderColor: ColorPath.athensGrey9,
-                          useBorderColor: true,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Enable two factor authentication",
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.textPrimary,
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userVm.fullName,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "This allows you add an extra security to your account",
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.textSecondary,
+                                Text(
+                                  "${userVm.email}\n${userVm.isOrganization
+                                      ? "Corporate Donor"
+                                      : userVm.setName == "N/A"
+                                      ? ""
+                                      : "${userVm.setName} set"}",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.textTertiary,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Transform.scale(
-                          scale: .55,
-                          child: CupertinoSwitch(
-                            value: userVm.twoFA,
-                            onChanged: (val) async {
-                              await userVm.toggle2FA(value: val);
-                              showFlushBar(
-                                context: context,
-                                message: userVm.message,
-                                success: userVm.state == ViewState.retrieved,
-                              );
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            "Enable biometrics",
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.textPrimary,
+                              ],
                             ),
                           ),
-                        ),
-                        Transform.scale(
-                          scale: .55,
-                          child: CupertinoSwitch(
-                            value: userVm.isBioUser,
-                            onChanged: (val) async {
-                              await SecureStorageUtils.saveBiometricsPref(
-                                value: val,
-                              );
-                              userVm.isBioUser = val;
-                              showFlushBar(
-                                context: context,
-                                message: "Biometrics updated",
-                              );
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-                  ],
-                ),
-              ),
-              //NOtIFICATION CARD
-              IcobaContainer(
-                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
-                margin: EdgeInsets.only(top: 16.h),
-                bgColor: colorScheme.whiteText,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Notifications",
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                          if (userVm.tierBadgeUrl.isNotEmpty)
+                            Image.network(
+                              userVm.tierBadgeUrl,
+                              height: 56.h,
+                              width: 56.w,
+                            ),
+                          // CustomAssetViewer(
+                          //   asset: AppAsset.bronzeBadge,
+                          //   height: 56.h,
+                          //   width: 56.w,
+                          //   useColorFilter: false,
+                          // ),
+                        ],
                       ),
-                    ),
-                    Divider(color: ColorPath.athensGrey8),
-                    SizedBox(height: 12.h),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Push notifications",
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                "This allows you receive notifications on your device",
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Transform.scale(
-                          scale: .55,
-                          child: CupertinoSwitch(
-                            value: userVm.pushNotificationPreference,
-                            onChanged: (val) async {
-                              await userVm.updateNotificationPreference(
-                                pushNotifications: val,
-                              );
-                              showFlushBar(
-                                context: context,
-                                message: userVm.message,
-                                success: userVm.state == ViewState.retrieved,
-                              );
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Email notifications",
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                "This allows you receive notification in your email",
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Transform.scale(
-                          scale: .55,
-                          child: CupertinoSwitch(
-                            value: userVm.emailNotificationPreference,
-                            onChanged: (val) async {
-                              await userVm.updateNotificationPreference(
-                                emailNotifications: val,
-                              );
-                              showFlushBar(
-                                context: context,
-                                message: userVm.message,
-                                success: userVm.state == ViewState.retrieved,
-                              );
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-                  ],
-                ),
-              ),
-              IcobaContainer(
-                padding: EdgeInsets.all(16.h),
-                margin: EdgeInsets.only(top: 16.h),
-                bgColor: colorScheme.whiteText,
-                child: CustomButton(
-                  onPressed: () {
-                    baseBottomSheet(context: context, content: LogoutBs());
-                  },
-                  childWidget: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Logout",
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Icon(Icons.logout, color: Colors.white),
                     ],
                   ),
                 ),
-              ),
-              SizedBox(height: 75.h),
-            ],
+                //PROFILE INFO CARD
+                IcobaContainer(
+                  padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
+                  margin: EdgeInsets.only(top: 16.h),
+                  bgColor: colorScheme.whiteText,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Profile",
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Divider(color: ColorPath.athensGrey8),
+                      SizedBox(height: 12.h),
+                      //Org
+                      // InfoText(title: "Organization", data: "WEMA BANK"),
+                      // SizedBox(height: 12.h),
+                      // InfoText(title: "Industry", data: "Banking Industry"),
+                      // SizedBox(height: 12.h),
+                      // InfoText(title: "Official email", data: Don"crs@wema.com"),
+                      // SizedBox(height: 12.h),
+                      // InfoText(title: "Phone number", data: "+2348098765432"),
+                      // SizedBox(height: 12.h),
+                      // InfoText(
+                      //   title: "OContact person",
+                      //   data: "Sheriff Olusanya Jacobs",
+                      // ),
+                      // SizedBox(height: 12.h),
+                      //personal
+                      InfoText(title: "Name", data: userVm.fullName),
+                      SizedBox(height: 12.h),
+                      if (!userVm.isOrganization)
+                        InfoText(
+                          title: userVm.isWife ? "Affiliated Set" : "Set",
+                          data: userVm.isWife
+                              ? "${userVm.affiliatedSetName == "N/A" ? "0000" : userVm.affiliatedSetName} set"
+                              : "${userVm.setName == "N/A" ? "0000" : userVm.setName} set",
+                        ),
+                      if (!userVm.isOrganization) SizedBox(height: 12.h),
+                      if (!userVm.isOrganization &&
+                          userVm.user?.donor?.house != null)
+                        Column(
+                          children: [
+                            InfoText(
+                              title: userVm.isWife
+                                  ? "Affiliated House"
+                                  : "House",
+                              data: userVm.house,
+                            ),
+                            SizedBox(height: 12.h),
+                          ],
+                        ),
+                      InfoText(title: "Email", data: userVm.email),
+                      SizedBox(height: 12.h),
+                      InfoText(title: "Phone number", data: userVm.phone),
+                      SizedBox(height: 12.h),
+                    ],
+                  ),
+                ),
+                //SECURITY CARD
+                IcobaContainer(
+                  padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
+                  margin: EdgeInsets.only(top: 16.h),
+                  bgColor: colorScheme.whiteText,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Security",
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Divider(color: ColorPath.athensGrey8),
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InfoText(
+                              title: "Password",
+                              data: "******************",
+                            ),
+                          ),
+                          CustomButton(
+                            onPressed: () {
+                              pushNavigation(
+                                context: context,
+                                widget: ForgotPassword(
+                                  step: 2,
+                                  isPasswordReset: true,
+                                ),
+                                routeName: NamedRoutes.forgotPassword,
+                              );
+                            },
+                            buttonWidth: 70,
+                            buttonHeight: 35,
+                            buttonText: "Edit",
+                            buttonTextColor: colorScheme.textPrimary,
+                            buttonTextSize: 16.sp,
+                            borderColor: ColorPath.athensGrey9,
+                            useBorderColor: true,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Enable two factor authentication",
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  "This allows you add an extra security to your account",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: .55,
+                            child: CupertinoSwitch(
+                              value: userVm.twoFA,
+                              onChanged: (val) async {
+                                await userVm.toggle2FA(value: val);
+                                showFlushBar(
+                                  context: context,
+                                  message: userVm.message,
+                                  success: userVm.state == ViewState.retrieved,
+                                );
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Enable biometrics",
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: .55,
+                            child: CupertinoSwitch(
+                              value: userVm.isBioUser,
+                              onChanged: (val) async {
+                                await SecureStorageUtils.saveBiometricsPref(
+                                  value: val,
+                                );
+                                userVm.isBioUser = val;
+                                showFlushBar(
+                                  context: context,
+                                  message: "Biometrics updated",
+                                );
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
+                ),
+                //NOtIFICATION CARD
+                IcobaContainer(
+                  padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h),
+                  margin: EdgeInsets.only(top: 16.h),
+                  bgColor: colorScheme.whiteText,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Notifications",
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Divider(color: ColorPath.athensGrey8),
+                      SizedBox(height: 12.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Push notifications",
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  "This allows you receive notifications on your device",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: .55,
+                            child: CupertinoSwitch(
+                              value: userVm.isPushnotificationEnabled,
+                              onChanged: (val) async {
+                                await userVm.updateNotificationPreference(
+                                  pushNotifications: val,
+                                );
+                                showFlushBar(
+                                  context: context,
+                                  message: userVm.message,
+                                  success: userVm.state == ViewState.retrieved,
+                                );
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Email notifications",
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  "This allows you receive notification in your email",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: .55,
+                            child: CupertinoSwitch(
+                              value: userVm.isEmailNotificationsEnabled,
+                              onChanged: (val) async {
+                                await userVm.updateNotificationPreference(
+                                  emailNotifications: val,
+                                );
+                                showFlushBar(
+                                  context: context,
+                                  message: userVm.message,
+                                  success: userVm.state == ViewState.retrieved,
+                                );
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
+                ),
+                IcobaContainer(
+                  padding: EdgeInsets.all(16.h),
+                  margin: EdgeInsets.only(top: 16.h),
+                  bgColor: colorScheme.whiteText,
+                  child: CustomButton(
+                    onPressed: () {
+                      baseBottomSheet(
+                        context: context,
+                        content: DeleteAccountBs(),
+                      );
+                    },
+                    borderColor: ColorPath.brandColor,
+                    useBorderColor: true,
+                    childWidget: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Delete Account",
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: ColorPath.brandColor,
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Icon(Icons.delete, color: Colors.red),
+                      ],
+                    ),
+                  ),
+                ),
+                IcobaContainer(
+                  padding: EdgeInsets.all(16.h),
+                  margin: EdgeInsets.only(top: 16.h),
+                  bgColor: colorScheme.whiteText,
+                  child: CustomButton(
+                    onPressed: () {
+                      baseBottomSheet(context: context, content: LogoutBs());
+                    },
+                    childWidget: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Logout",
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Icon(Icons.logout, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 75.h),
+              ],
+            ),
           ),
         ),
       ),

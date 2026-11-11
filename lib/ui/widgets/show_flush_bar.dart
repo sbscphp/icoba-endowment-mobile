@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart'
-    show Clickable;
+import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 
 import '../../core/constants/app_asset.dart';
 import '../../core/constants/color_path.dart';

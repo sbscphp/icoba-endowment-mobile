@@ -6,13 +6,16 @@ import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_sch
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/info_data.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/auth/auth_vm.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/donation_vm.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/guest_donation_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/user/user_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/input_formatters/money_input_formatter.dart';
 import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
 import 'package:icoba_endowment_mobile/core/utilities/utilities.dart';
 import 'package:icoba_endowment_mobile/ui/pages/donation_and_pledge/pledge_summary.dart';
-import 'package:icoba_endowment_mobile/ui/pages/donation_and_pledge/select_payment_method.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/donation_summary.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/bottom_sheets/select_option_bottom_sheet.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/busy_overlay.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
@@ -44,6 +47,9 @@ class ContributionAmount extends ConsumerStatefulWidget {
   final String? guestDonorType;
   final String? guestSetNumber;
   final String? guestAlumniId;
+  final String? guestHouse;
+  final String? guestWifeChapter;
+  final bool? isIgbobianOwned;
 
   const ContributionAmount({
     super.key,
@@ -61,6 +67,9 @@ class ContributionAmount extends ConsumerStatefulWidget {
     this.guestDonorType,
     this.guestSetNumber,
     this.guestAlumniId,
+    this.guestHouse,
+    this.guestWifeChapter,
+    this.isIgbobianOwned,
   });
 
   @override
@@ -69,7 +78,11 @@ class ContributionAmount extends ConsumerStatefulWidget {
 
 class _ContributionAmountState extends ConsumerState<ContributionAmount> {
   final TextEditingController _campaignSelection = TextEditingController();
+  final TextEditingController _donationPurpose = TextEditingController();
+  final TextEditingController _otherPurpose = TextEditingController();
   final TextEditingController _amount = TextEditingController();
+
+  InfoData? selectedPurpose;
 
   //pledge
   final TextEditingController _pledgeType = TextEditingController();
@@ -102,7 +115,9 @@ class _ContributionAmountState extends ConsumerState<ContributionAmount> {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final vm = ref.watch(donationViewModel);
+    final userVm = ref.watch(userViewModel);
     final guestDonorVm = ref.watch(guestDonationViewModel);
+    final authVm = ref.watch(authViewModel);
 
     return BusyOverlay(
       show: vm.pledgeState == ViewState.busy,
@@ -181,6 +196,70 @@ class _ContributionAmountState extends ConsumerState<ContributionAmount> {
                               ),
                             ),
                           ),
+                          SizedBox(height: 16.h),
+                          Clickable(
+                            onPressed: () {
+                              baseBottomSheet(
+                                context: context,
+                                content: SelectOptionBottomSheet(
+                                  bottomSheetTitle: "Select Purpose",
+                                  options: [
+                                    ...authVm.donationPurposes
+                                        .map((e) => e.label ?? "N/A")
+                                        .toList(),
+                                    "Other",
+                                  ],
+                                  onOptionSelected: (value) {
+                                    setState(() {
+                                      _donationPurpose.text = value;
+                                      if (value == "Other") {
+                                        selectedPurpose = null;
+                                      } else {
+                                        selectedPurpose = authVm
+                                            .donationPurposes
+                                            .firstWhere(
+                                              (element) =>
+                                                  element.label == value,
+                                              orElse: () =>
+                                                  authVm.donationPurposes.first,
+                                            );
+                                      }
+                                    });
+                                  },
+                                  selectedOption: _donationPurpose.text,
+                                ),
+                              );
+                            },
+                            child: CustomTextField(
+                              label:
+                                  "${widget.contributionType == ContributionType.donation ? "Donation" : "Pledge"}  Purpose",
+                              labelFontWeight: FontWeight.bold,
+                              controller: _donationPurpose,
+                              enabled: false,
+                              readOnly: true,
+                              hintText: "Select Purpose",
+                              // validator: FieldValidator.validate,
+                              suffixIcon: Padding(
+                                padding: EdgeInsets.only(right: 16.w),
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_outlined,
+                                  color: colorScheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_donationPurpose.text == "Other")
+                            Column(
+                              children: [
+                                SizedBox(height: 16.h),
+                                CustomTextField(
+                                  label: "Other Purpose",
+                                  labelFontWeight: FontWeight.bold,
+                                  controller: _otherPurpose,
+                                  hintText: "Enter donation purpose",
+                                ),
+                              ],
+                            ),
 
                           if (vm.selectedCampaign != null)
                             Builder(
@@ -368,21 +447,6 @@ class _ContributionAmountState extends ConsumerState<ContributionAmount> {
                                 );
                               },
                             ),
-
-                          // SizedBox(height: 24.h),
-                          // Clickable(
-                          //   onPressed: () {},
-                          //   child: CustomTextField(
-                          //     label: "Designate donation to",
-                          //     suffixIcon: Padding(
-                          //       padding: EdgeInsets.only(right: 12.w),
-                          //       child: Icon(
-                          //         Icons.keyboard_arrow_down,
-                          //         color: ColorPath.gullGrey,
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
                           if (widget.contributionType ==
                                   ContributionType.pledge &&
                               vm.selectedCampaign != null)
@@ -712,6 +776,9 @@ class _ContributionAmountState extends ConsumerState<ContributionAmount> {
                                 amount: Utilities.formatToDouble(
                                   value: _amount.text,
                                 ),
+                                donationPurpose:
+                                    selectedPurpose?.label ??
+                                    _otherPurpose.text,
                               ),
                               routeName: NamedRoutes.pledgeSummary,
                             );
@@ -728,6 +795,8 @@ class _ContributionAmountState extends ConsumerState<ContributionAmount> {
                               amount: Utilities.formatToDouble(
                                 value: _amount.text,
                               ),
+                              donationPurpose:
+                                  selectedPurpose?.label ?? _otherPurpose.text,
                             ),
                             routeName: NamedRoutes.pledgeSummary,
                           );
@@ -749,19 +818,39 @@ class _ContributionAmountState extends ConsumerState<ContributionAmount> {
                           guestDonorVm.donorType = widget.guestDonorType;
                           guestDonorVm.setNumber = widget.guestSetNumber;
                           guestDonorVm.alumniID = widget.guestAlumniId;
+                          guestDonorVm.icobawives = widget.guestWifeChapter;
+                          guestDonorVm.house = widget.guestHouse;
+                          guestDonorVm.purpose =
+                              selectedPurpose?.label ?? _otherPurpose.text;
                         }
 
-                        pushNavigation(
+                        baseBottomSheet(
                           context: context,
-                          widget: SelectPaymentMethod(
+                          content: DonationSummary(
+                            campaign: vm.selectedCampaign?.name ?? "N/A",
                             amount: Utilities.formatToDouble(
                               value: _amount.text,
-                            ),
-                            contributionType: widget.contributionType,
+                            ).toString(),
+                            currency: vm.selectedCurrency ?? "NGN",
                             isGuest: widget.isGuest,
+                            donationPurpose:
+                                selectedPurpose?.label ?? _otherPurpose.text,
+                            email: widget.guestEmail ?? userVm.email,
+                            contributionType: widget.contributionType,
                           ),
-                          routeName: NamedRoutes.selectedPaymentMethod,
                         );
+
+                        // pushNavigation(
+                        //   context: context,
+                        //   widget: SelectPaymentMethod(
+                        //     amount: Utilities.formatToDouble(
+                        //       value: _amount.text,
+                        //     ),
+                        //     contributionType: widget.contributionType,
+                        //     isGuest: widget.isGuest,
+                        //   ),
+                        //   routeName: NamedRoutes.selectedPaymentMethod,
+                        // );
                       },
                     ),
                     SizedBox(height: 32.h),

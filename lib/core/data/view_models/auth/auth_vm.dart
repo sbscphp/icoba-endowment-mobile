@@ -2,6 +2,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/info_data.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/login_response.dart';
 import 'package:icoba_endowment_mobile/core/utilities/secure_storage/secure_storage_utils.dart';
 
@@ -33,6 +34,10 @@ class AuthVm extends BaseState {
       _onboardingDropdownData?.corporateCategories ?? [];
   List<SetsCategory> get sets => _onboardingDropdownData?.sets ?? [];
   List<Country> get countries => _onboardingDropdownData?.countries ?? [];
+  List<InfoData> get houses => _onboardingDropdownData?.houses ?? [];
+  List<InfoData> get wivesChapter =>
+      _onboardingDropdownData?.icobaWivesType ?? [];
+  List<InfoData> get donationPurposes => _onboardingDropdownData?.donationPurposes ?? [];
 
   DonationCategory? selectedDonorType;
 
@@ -56,10 +61,13 @@ class AuthVm extends BaseState {
   }
 
   SetsCategory? selectedSet;
+  InfoData? selectedHouse;
+  InfoData? selectedWivesChapter;
   Country? selectedCountry;
   CorporateCategory? selectedCorporateCategory;
   ChallengeTokenModel? _tokenResponse;
   int? get timerDuration => _tokenResponse?.expiresIn;
+  bool isIgbobianOwned = false;
 
   Future<void> registerAlumni({
     required String email,
@@ -73,6 +81,7 @@ class AuthVm extends BaseState {
 
     final details = {
       "donor_type": "icoba_alumni",
+      "house": selectedHouse?.value,
       "email": email,
       "password": password,
       "password_confirmation": password,
@@ -123,6 +132,9 @@ class AuthVm extends BaseState {
       "corporate_category_uuid": selectedCorporateCategory?.uuid,
       "rc_number": rcNumber, //"12345",
       "tin": tin, //"31213050-0001",
+      "is_igbobian_owned": isIgbobianOwned,
+      "affiliated_set_number": selectedSet?.setNumber,
+      "house": selectedHouse?.value,
       "client": "mobile", //web or mobile
       // "otp_channel": "email" //default is email. options: email, sms
     };
@@ -135,6 +147,7 @@ class AuthVm extends BaseState {
           _message = response.message ?? defaultSuccessMessage;
           _tokenResponse = response.data;
           selectedDonorType = null;
+          isIgbobianOwned = false;
           setState(ViewState.retrieved);
         })
         .catchError((e) {
@@ -153,14 +166,17 @@ class AuthVm extends BaseState {
     setState(ViewState.busy);
 
     final details = {
-      "donor_type": "friends_of_icoba",
+      "donor_type": selectedDonorType?.slug ?? 'friends_of_icoba',
       "email": email,
       "password": password,
       "password_confirmation": password,
       "phone_number": phone, //"+14155552672",
       "country_uuid": selectedCountry?.uuid,
-      "firstname": fname,
-      "lastname": lname,
+      "firstname": fname.trim(),
+      "lastname": lname.trim(),
+      "wives_type": selectedWivesChapter?.value,
+      "affiliated_set_number": selectedSet?.setNumber,
+      "house": selectedHouse?.value,
       "client": "mobile", //web or mobile
       // "otp_channel": "email" //default is email. options: email, sms
     };
@@ -186,7 +202,7 @@ class AuthVm extends BaseState {
     setSecondState(ViewState.busy);
 
     final details = {
-      "challenge_token": _tokenResponse?.challengeToken,
+      "challenge_token": isEmailVerification ? _loginResponse?.challengeToken : _tokenResponse?.challengeToken ,
       "otp": otp,
       "client": "mobile", //web or mobile
     };
@@ -245,7 +261,6 @@ class AuthVm extends BaseState {
   bool _isUserBioUser = false;
   bool get isUserBioUser => _isUserBioUser;
 
-
   Future<void> getCachedUser() async {
     final userData = await SecureStorageUtils.retrieveEmail();
     _isUserBioUser = await SecureStorageUtils.retrieveBiometricPref();
@@ -255,7 +270,8 @@ class AuthVm extends BaseState {
     }
   }
 
-  bool get is2FA => _loginResponse?.twofa ?? false;
+  bool get is2FA => _loginResponse?.otpPurpose == "LOGIN";
+  bool get isEmailVerification => _loginResponse?.otpPurpose == "EMAIL_VERIFICATION";
   int? get twoFaDuration => _loginResponse?.expiresIn;
 
   Future<void> login({

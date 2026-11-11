@@ -69,6 +69,8 @@ class DonationCategory {
         return SignupType.friendOfIcoba;
       case "relatives_of_icoba":
         return SignupType.familiesOfIcoba;
+      case "wives_of_icoba":
+        return SignupType.wives;
       default:
         return SignupType.none;
     }

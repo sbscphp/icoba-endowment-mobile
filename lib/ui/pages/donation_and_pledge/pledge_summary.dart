@@ -23,7 +23,12 @@ import 'package:icoba_endowment_mobile/ui/widgets/show_flush_bar.dart';
 
 class PledgeSummary extends ConsumerStatefulWidget {
   final double amount;
-  const PledgeSummary({super.key, required this.amount});
+  final String donationPurpose;
+  const PledgeSummary({
+    super.key,
+    required this.amount,
+    required this.donationPurpose,
+  });
 
   @override
   ConsumerState<PledgeSummary> createState() => _PledgeSummaryState();
@@ -269,6 +274,7 @@ class _PledgeSummaryState extends ConsumerState<PledgeSummary> {
                               context: context,
                               widget: SelectPaymentMethod(
                                 amount: vm.amountPerInstallment,
+                                donationPurpose: widget.donationPurpose,
                                 contributionType: ContributionType.pledge,
                               ),
                               routeName: NamedRoutes.selectedPaymentMethod,
@@ -278,7 +284,7 @@ class _PledgeSummaryState extends ConsumerState<PledgeSummary> {
                       ),
                     ],
                   ),
-                    SizedBox(height: 32.h),
+                  SizedBox(height: 32.h),
                 ],
               ),
             ),

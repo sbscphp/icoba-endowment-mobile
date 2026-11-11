@@ -11,9 +11,7 @@ import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
 class RecentDonorItem extends StatelessWidget {
   final RecentDonor? donor;
 
-
-
-  const RecentDonorItem({super.key,this.donor});
+  const RecentDonorItem({super.key, this.donor});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +30,10 @@ class RecentDonorItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(donor?.displayName ?? "N/A", style: textTheme.bodyMedium),
+                  Text(
+                    donor?.displayName ?? "N/A",
+                    style: textTheme.bodyMedium,
+                  ),
                 ],
               ),
               SizedBox(width: 12.w),
@@ -48,26 +49,50 @@ class RecentDonorItem extends StatelessWidget {
             ],
           ),
           Divider(thickness: .5, color: ColorPath.athensGrey),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: FittedBox(
-                    child: Text(
-                      "${DateUtilities.dMY(donor?.paidAt ?? DateTime.now())},${DateUtilities.time(date: donor?.paidAt  ?? DateTime.now())}",
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.textTertiary,
-                      ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Recognition",
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.textTertiary,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              IcobaTag2(
+                donorType: donor?.tier?.name ?? "N/A",
+                fontSize: 12.sp,
+                fontWeight: FontWeight(600),
+                color: ColorPath.dynamicColor(
+                  donor?.tier?.baseColor,
+                  ColorPath.brandColor,
+                ),
+              ),
+            ],
+          ),
+          Divider(thickness: .5, color: ColorPath.athensGrey),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Date",
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.textTertiary,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Flexible(
+                child: FittedBox(
+                  child: Text(
+                    "${DateUtilities.dMY(donor?.paidAt ?? DateTime.now())} - ${DateUtilities.time(date: donor?.paidAt ?? DateTime.now())}",
+                    style: textTheme.bodySmall?.copyWith(
+                      // color: colorScheme.textTertiary,
                     ),
                   ),
                 ),
-                SizedBox(width: 8.w),
-                IcobaTag2(
-                  donorType: donor?.tier?.name ?? "N/A",
-                  color: ColorPath.dynamicColor(donor?.tier?.baseColor, ColorPath.brandColor),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ],
       ),
     );

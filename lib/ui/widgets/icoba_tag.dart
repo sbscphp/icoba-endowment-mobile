@@ -6,7 +6,8 @@ import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
 
 class IcobaTag extends StatelessWidget {
   final String type;
-  const IcobaTag({super.key, this.type = "founder"});
+  final bool showIcon;
+  const IcobaTag({super.key, this.type = "founder", this.showIcon = true});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +18,9 @@ class IcobaTag extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Row(
         children: [
-          Icon(Icons.star, size: 12, color: _getColor()),
-          SizedBox(width: 2.w),
-          Text(_getText(), style: textTheme.bodySmall),
+          if (showIcon) Icon(Icons.star, size: 12, color: _getColor()),
+          if (showIcon) SizedBox(width: 2.w),
+          Text(_getText(), style: textTheme.bodySmall?.copyWith()),
         ],
       ),
     );
@@ -31,7 +32,6 @@ class IcobaTag extends StatelessWidget {
         return "Founder's circle";
       case "friends":
       case "Friends of Igbobi College":
-
         return "Friends of Igbobi college";
       case "bronze":
         return "Bronze tier";
@@ -41,6 +41,12 @@ class IcobaTag extends StatelessWidget {
         return "Gold tier";
       case "platinum":
         return "Platinum tier";
+      case "pending":
+        return "Pending";
+      case "failed":
+        return "Failed";
+      case "successful":
+        return "Successful";
       default:
         return "Founder's circle";
     }
@@ -58,9 +64,12 @@ class IcobaTag extends StatelessWidget {
       case "silver":
         return ColorPath.silver;
       case "gold":
+      case "pending":
         return ColorPath.gold;
       case "platinum":
         return ColorPath.platinum;
+      case "failed":
+        return ColorPath.crimsonRed;
       default:
         return ColorPath.popGreen;
     }
@@ -78,9 +87,12 @@ class IcobaTag extends StatelessWidget {
       case "silver":
         return ColorPath.lightSilver;
       case "gold":
+      case "pending":
         return ColorPath.lightGold;
       case "platinum":
         return ColorPath.lightPlatinum;
+      case "failed":
+        return ColorPath.cinderellaPink;
       default:
         return ColorPath.scandalGreen;
     }
@@ -90,7 +102,15 @@ class IcobaTag extends StatelessWidget {
 class IcobaTag2 extends StatelessWidget {
   final String donorType;
   final Color? color;
-  const IcobaTag2({super.key, this.donorType = "founder", this.color});
+  final double? fontSize;
+  final FontWeight? fontWeight;
+  const IcobaTag2({
+    super.key,
+    this.donorType = "founder",
+    this.color,
+    this.fontSize,
+    this.fontWeight,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +127,13 @@ class IcobaTag2 extends StatelessWidget {
 
           SizedBox(width: 2.w),
           // Text(_getText(), style: textTheme.bodySmall),
-          Text(donorType, style: textTheme.bodySmall),
+          Text(
+            donorType,
+            style: textTheme.bodySmall?.copyWith(
+              fontSize: fontSize,
+              fontWeight: fontWeight,
+            ),
+          ),
         ],
       ),
     );

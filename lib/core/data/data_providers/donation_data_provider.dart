@@ -7,6 +7,7 @@ import 'package:icoba_endowment_mobile/core/data/models/response_data/bank_data.
 import 'package:icoba_endowment_mobile/core/data/models/response_data/checkout_response.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/checkout_validation_response.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/pledge_data.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/quote_data.dart';
 
 import '../../constants/api_routes.dart';
 import '../enum/request_type.dart';
@@ -297,6 +298,36 @@ class DonationDataProvider {
           data,
           (item) => PledgeData.fromJson(item),
         ),
+      );
+      completer.complete(result);
+    } catch (e) {
+      completer.completeError(e);
+    }
+    return completer.future;
+  }
+
+  ///get [Quote Data]
+  Future<ApiResponse<QuoteData>> getDonationQuote({
+    required String amount,
+    required String currency,
+  }) async {
+    var completer = Completer<ApiResponse<QuoteData>>();
+    try {
+      Map<String, dynamic> response = await NetworkManager()
+          .networkRequestManager(
+            RequestType.get,
+            ApiRoutes.donationQuote(amount: amount, currency: currency),
+            useAuth: false,
+            // body: jsonEncode(details),
+          );
+
+      final decryptedString = aesDecrypt(response["response"]);
+
+      final parsedData = jsonDecode(decryptedString);
+
+      var result = ApiResponse<QuoteData>.fromJson(
+        parsedData,
+        (data) => QuoteData.fromJson(data as Map<String, dynamic>),
       );
       completer.complete(result);
     } catch (e) {

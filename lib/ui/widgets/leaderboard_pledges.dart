@@ -4,7 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_asset.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/leaderboard_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/debouncer.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/empty_state.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/error_state.dart';
@@ -41,11 +41,12 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _setScrollListener();
       _donorScrollListener();
+      _houseScrollListener();
     });
   }
 
   void _setScrollListener() {
-    final vm = ref.watch(dashboardViewModel);
+    final vm = ref.watch(leaderboardViewModel);
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
@@ -66,8 +67,30 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
     });
   }
 
+  void _houseScrollListener() {
+    final vm = ref.watch(leaderboardViewModel);
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        //check paginated state
+        if (vm.paginatedState != ViewState.error) {
+          //check if data is not being currently fetched and also check total records
+          if (vm.paginatedState != ViewState.busy &&
+              vm.leaderBoardHouses.length < vm.housePledgetotal) {
+            //fetch more
+            vm.getLeaderBoardHouses(
+              scope: "pledges",
+              firstCall: false,
+              sortDirection: 'desc',
+            );
+          }
+        }
+      }
+    });
+  }
+
   void _donorScrollListener() {
-    final vm = ref.watch(dashboardViewModel);
+    final vm = ref.watch(leaderboardViewModel);
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
@@ -89,7 +112,7 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     // final colorScheme = Theme.of(context).colorScheme;
-    final dashboardVm = ref.watch(dashboardViewModel);
+    final leaderboardVm = ref.watch(leaderboardViewModel);
 
     return Container(
       color: ColorPath.athensGrey4,
@@ -99,50 +122,56 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
         padding: EdgeInsets.all(16.w),
         child: Builder(
           builder: (context) {
-            if (dashboardVm.leaderboardState == ViewState.busy) {
+            if (leaderboardVm.state == ViewState.busy) {
               return AppLoader();
             }
-            if (dashboardVm.leaderboardState == ViewState.error) {
+            if (leaderboardVm.state == ViewState.error) {
               return ErrorState(
-                message: dashboardVm.message,
+                message: leaderboardVm.message,
                 onPressed: () {
-                  dashboardVm.getLeaderBoardSets(
+                  leaderboardVm.getLeaderBoardSets(
                     scope: "pledges",
                     sortDirection: 'desc',
                   );
-                  dashboardVm.getLeaderBoardDonors(scope: "pledges");
+                  leaderboardVm.getLeaderBoardDonors(scope: "pledges");
+                  leaderboardVm.getLeaderBoardHouses(scope: "pledges");
                 },
               );
             }
 
-            if (dashboardVm.leaderBoardDonors.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: EmptyState(
-                  asset: AppAsset.empty,
-                  title: "No Pledges Yet",
-                ),
-              );
-            }
+            // if (dashboardVm.leaderBoardDonors.isEmpty) {
+            //   return Padding(
+            //     padding: const EdgeInsets.all(18.0),
+            //     child: EmptyState(
+            //       asset: AppAsset.empty,
+            //       title: "No Pledges Yet",
+            //     ),
+            //   );
+            // }
             return RefreshIndicator(
               onRefresh: () async {
-                if (dashboardVm.selectedPledgeViewType == "sets") {
-                  dashboardVm.getLeaderBoardSets(
+                if (leaderboardVm.selectedPledgeViewType == "sets") {
+                  leaderboardVm.getLeaderBoardSets(
+                    scope: "pledges",
+                    sortDirection: 'desc',
+                  );
+                } else if (leaderboardVm.selectedPledgeViewType == "houses") {
+                  leaderboardVm.getLeaderBoardHouses(
                     scope: "pledges",
                     sortDirection: 'desc',
                   );
                 } else {
-                  dashboardVm.getLeaderBoardDonors(scope: "pledges");
+                  leaderboardVm.getLeaderBoardDonors(scope: "pledges");
                 }
               },
               child: SingleChildScrollView(
                 controller: scrollController,
                 child: Column(
                   children: [
-                    if (dashboardVm.selectedPledgeViewType == "sets")
+                    if (leaderboardVm.selectedPledgeViewType == "sets")
                       Column(
                         children: [
-                          if (dashboardVm.setPledgeOne != null)
+                          if (leaderboardVm.setPledgeOne != null)
                             IcobaContainer(
                               border: Border.all(
                                 color: ColorPath.primaryYellow,
@@ -164,15 +193,15 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                     child: Column(
                                       children: [
                                         Text(
-                                          "Set ${dashboardVm.setPledgeOne?.set?.setNumber}",
+                                          "Set ${leaderboardVm.setPledgeOne?.set?.setNumber}",
                                           style: textTheme.bodySmall,
                                         ),
                                         NairaDisplay(
                                           amount:
                                               double.tryParse(
-                                                dashboardVm
+                                                leaderboardVm
                                                         .setPledgeOne
-                                                        ?.amountInNgn ??
+                                                        ?.fulfilledAmountNgn ??
                                                     "0",
                                               ) ??
                                               0,
@@ -209,15 +238,15 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                         child: Column(
                                           children: [
                                             Text(
-                                              "Set ${dashboardVm.setPledgeTwo?.set?.setNumber}",
+                                              "Set ${leaderboardVm.setPledgeTwo?.set?.setNumber}",
                                               style: textTheme.bodySmall,
                                             ),
                                             NairaDisplay(
                                               amount:
                                                   double.tryParse(
-                                                    dashboardVm
+                                                    leaderboardVm
                                                             .setPledgeTwo
-                                                            ?.amountInNgn ??
+                                                            ?.fulfilledAmountNgn ??
                                                         "0",
                                                   ) ??
                                                   0,
@@ -255,15 +284,15 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                         child: Column(
                                           children: [
                                             Text(
-                                              "Set ${dashboardVm.setPledgeThree?.set?.setNumber}",
+                                              "Set ${leaderboardVm.setPledgeThree?.set?.setNumber}",
                                               style: textTheme.bodySmall,
                                             ),
                                             NairaDisplay(
                                               amount:
                                                   double.tryParse(
-                                                    dashboardVm
+                                                    leaderboardVm
                                                             .setPledgeThree
-                                                            ?.amountInNgn ??
+                                                            ?.fulfilledAmountNgn ??
                                                         "0",
                                                   ) ??
                                                   0,
@@ -303,17 +332,26 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                       setState(() {
                                         isSearch = false;
                                       });
-                                      if (dashboardVm
+                                      if (leaderboardVm
                                               .selectedDonationViewType ==
                                           "sets") {
-                                        dashboardVm.getLeaderBoardSets(
+                                        leaderboardVm.getLeaderBoardSets(
+                                          sortDirection: 'desc',
+                                          scope: "pledges",
+                                          firstCall: false,
+                                          isSearch: true,
+                                        );
+                                      } else if (leaderboardVm
+                                              .selectedDonationViewType ==
+                                          "houses") {
+                                        leaderboardVm.getLeaderBoardHouses(
                                           sortDirection: 'desc',
                                           scope: "pledges",
                                           firstCall: false,
                                           isSearch: true,
                                         );
                                       } else {
-                                        dashboardVm.getLeaderBoardDonors(
+                                        leaderboardVm.getLeaderBoardDonors(
                                           scope: "pledges",
                                           firstCall: false,
                                           isSearch: true,
@@ -323,10 +361,20 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                       setState(() {
                                         isSearch = true;
                                       });
-                                      if (dashboardVm
+                                      if (leaderboardVm
                                               .selectedDonationViewType ==
                                           "sets") {
-                                        dashboardVm.getLeaderBoardSets(
+                                        leaderboardVm.getLeaderBoardSets(
+                                          scope: "pledges",
+                                          sortDirection: 'desc',
+                                          firstCall: false,
+                                          searchQuery: value,
+                                          isSearch: true,
+                                        );
+                                      } else if (leaderboardVm
+                                              .selectedDonationViewType ==
+                                          "houses") {
+                                        leaderboardVm.getLeaderBoardHouses(
                                           scope: "pledges",
                                           sortDirection: 'desc',
                                           firstCall: false,
@@ -334,7 +382,7 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                           isSearch: true,
                                         );
                                       } else {
-                                        dashboardVm.getLeaderBoardDonors(
+                                        leaderboardVm.getLeaderBoardDonors(
                                           scope: "pledges",
                                           firstCall: false,
                                           searchQuery: value,
@@ -349,7 +397,7 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                                 prefixIcon: Icon(CupertinoIcons.search),
                                 border: InputBorder.none,
                                 hintText:
-                                    "Search ${dashboardVm.selectedPledgeViewType}",
+                                    "Search ${leaderboardVm.selectedPledgeViewType}",
                                 hintStyle: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Theme.of(
@@ -381,51 +429,11 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                       ],
                     ),
                     SizedBox(height: 16.h),
-                    dashboardVm.selectedPledgeViewType == "sets"
-                        ? ListView.separated(
-                            shrinkWrap: true,
-                            // controller: scrollController,
-                            padding: EdgeInsets.zero,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final donorSet =
-                                  dashboardVm.leaderBoardSetsPledges[index];
-                              return LeaderboardSetItem(donorSet: donorSet);
-                            },
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 16.h),
-                            itemCount:
-                                dashboardVm.leaderBoardSetsPledges.length,
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            // controller: scrollController,
-                            padding: EdgeInsets.zero,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final donor =
-                                  dashboardVm.leaderBoardDonorsPledges[index];
-                              return Donor(
-                                donorName: donor.displayName,
-                                setNumber: donor.info,
-                                amount:
-                                    double.tryParse(donor.totalAmount ?? '0') ??
-                                    0,
-                                currencyCode: donor.currency,
-                                date: donor.lastDonationAt,
-                                tagColor: ColorPath.dynamicColor(
-                                  donor.tier?.baseColor,
-                                  ColorPath.brandColor,
-                                ),
-                                tagText: donor.donorType?.label,
-                              );
-                            },
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 16.h),
-                            itemCount:
-                                dashboardVm.leaderBoardDonorsPledges.length,
-                          ),
-                    if (dashboardVm.paginatedState == ViewState.busy)
+                    _handleView(
+                      leaderboardVm.selectedPledgeViewType,
+                      leaderboardVm,
+                    ),
+                    if (leaderboardVm.paginatedState == ViewState.busy)
                       Column(
                         children: [
                           SizedBox(height: 6.h),
@@ -436,14 +444,14 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                           SizedBox(height: 6.h),
                         ],
                       ),
-                    if (dashboardVm.paginatedState == ViewState.error)
+                    if (leaderboardVm.paginatedState == ViewState.error)
                       ErrorState(
                         onPressed: () async {
-                          dashboardVm.getLeaderBoardDonors(
+                          leaderboardVm.getLeaderBoardDonors(
                             scope: "pledges",
                             firstCall: false,
                           );
-                          dashboardVm.getLeaderBoardSets(
+                          leaderboardVm.getLeaderBoardSets(
                             scope: "pledges",
                             firstCall: false,
                             sortDirection: 'desc',
@@ -451,6 +459,7 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
                         },
                         isPaginationType: true,
                       ),
+                    SizedBox(height: 85.h),
                   ],
                 ),
               ),
@@ -459,5 +468,84 @@ class _LeaderboardPledgesState extends ConsumerState<LeaderboardPledges> {
         ),
       ),
     );
+  }
+
+  Widget _handleView(String viewType, LeaderboardVm dashboardVm) {
+    switch (viewType) {
+      case 'sets':
+        return dashboardVm.leaderBoardSetsPledges.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 250.0),
+                child: EmptyState(
+                  asset: AppAsset.empty,
+                  title: isSearch ? "No result for query" : "No Donations Yet",
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                // controller: scrollController,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final donorSet = dashboardVm.leaderBoardSetsPledges[index];
+                  return LeaderboardSetItem(donorSet: donorSet, isPledge: true);
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.leaderBoardSetsPledges.length,
+              );
+      case 'houses':
+        return dashboardVm.leaderBoardHousesPledges.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: EmptyState(
+                  asset: AppAsset.empty,
+                  title: isSearch ? "No result for query" : "No Donations Yet",
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final house = dashboardVm.leaderBoardHousesPledges[index];
+                  return LeaderboardHouseItem(house: house, isPledge: true);
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.leaderBoardHousesPledges.length,
+              );
+
+      default:
+        return dashboardVm.leaderBoardDonorsPledges.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 250.0),
+                child: EmptyState(
+                  asset: AppAsset.empty,
+                  title: isSearch ? "No result for query" : "No Donations Yet",
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                // controller: scrollController,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final donor = dashboardVm.leaderBoardDonorsPledges[index];
+                  return Donor(
+                    donorName: donor.displayName,
+                    setNumber: donor.info,
+                    amount: double.tryParse(donor.totalAmount ?? '0') ?? 0,
+                    currencyCode: donor.currency,
+                    date: donor.lastDonationAt,
+                    tagColor: ColorPath.dynamicColor(
+                      donor.tier?.baseColor,
+                      ColorPath.brandColor,
+                    ),
+                    tagText: donor.donorType?.label,
+                  );
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.leaderBoardDonorsPledges.length,
+              );
+    }
   }
 }

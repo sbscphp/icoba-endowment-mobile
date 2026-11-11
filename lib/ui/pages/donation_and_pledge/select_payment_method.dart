@@ -26,12 +26,14 @@ import '../../widgets/in_app_web_view.dart';
 
 class SelectPaymentMethod extends ConsumerStatefulWidget {
   final double amount;
+  final String donationPurpose;
   final ContributionType contributionType;
   final bool isGuest;
 
   const SelectPaymentMethod({
     super.key,
     required this.amount,
+    required this.donationPurpose,
     this.contributionType = ContributionType.donation,
     this.isGuest = false,
   });
@@ -267,6 +269,7 @@ class _SelectPaymentMethodState extends ConsumerState<SelectPaymentMethod> {
                             await vm.stripeCheckout(
                               amount: widget.amount,
                               isAnonymous: isAnonymous,
+                              donationPurpose: widget.donationPurpose,
                               donationType:
                                   widget.contributionType ==
                                       ContributionType.donation
@@ -284,6 +287,7 @@ class _SelectPaymentMethodState extends ConsumerState<SelectPaymentMethod> {
                                           ContributionType.donation
                                       ? "Make a donation"
                                       : "Make Pledge",
+                                  isGuest: widget.isGuest,
                                 ),
                                 routeName: NamedRoutes.inAppWebView,
                               );
@@ -304,6 +308,7 @@ class _SelectPaymentMethodState extends ConsumerState<SelectPaymentMethod> {
                             widget: BankDetails(
                               amount: widget.amount,
                               contributionType: widget.contributionType,
+                              isGuest: widget.isGuest,
                             ),
                             routeName: NamedRoutes.bankDetails,
                           );
@@ -318,7 +323,6 @@ class _SelectPaymentMethodState extends ConsumerState<SelectPaymentMethod> {
                       },
                     ),
                     SizedBox(height: 32.h),
-
                   ],
                 ),
               ),

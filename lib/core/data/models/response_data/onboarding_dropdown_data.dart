@@ -1,6 +1,7 @@
 import 'package:icoba_endowment_mobile/core/data/models/country.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/corporate_category.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/donation_category.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/info_data.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/sets_category.dart';
 
 class OnboardingDropdownData {
@@ -8,12 +9,18 @@ class OnboardingDropdownData {
   final List<CorporateCategory>? corporateCategories;
   final List<SetsCategory>? sets;
   final List<Country>? countries;
+  final List<InfoData>? houses;
+  final List<InfoData>? icobaWivesType;
+  final List<InfoData>? donationPurposes;
 
   OnboardingDropdownData({
     this.donorTypes,
     this.corporateCategories,
     this.sets,
     this.countries,
+    this.houses,
+    this.icobaWivesType,
+    this.donationPurposes,
   });
 
   factory OnboardingDropdownData.fromJson(Map<String, dynamic> json) {
@@ -30,6 +37,15 @@ class OnboardingDropdownData {
       countries: List.from(
         json['countries'],
       ).map((e) => Country.fromJson(e)).toList(),
+      houses: List.from(
+        json['houses'],
+      ).map((e) => InfoData.fromJson(e)).toList(),
+      icobaWivesType: List.from(
+        json['icoba_wives_type'],
+      ).map((e) => InfoData.fromJson(e)).toList(),
+      donationPurposes: List.from(
+        json['donation_purposes'],
+      ).map((e) => InfoData.fromJson(e)).toList(),
     );
   }
 
@@ -40,5 +56,8 @@ class OnboardingDropdownData {
         .toList(),
     'sets': sets?.map((e) => e.toJson()).toList(),
     'countries': countries?.map((e) => e.toJson()).toList(),
+    'houses': houses?.map((e) => e.toJson()).toList(),
+    'icoba_wives_type': icobaWivesType?.map((e) => e.toJson()).toList(),
+    'donation_purposes': donationPurposes?.map((e) => e.toJson()).toList(),
   };
 }

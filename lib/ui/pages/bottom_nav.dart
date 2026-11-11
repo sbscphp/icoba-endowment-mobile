@@ -1,11 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/bottom_nav_vm.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/events_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/transactions_vm.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/donation_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/extensions/color_extensions.dart';
+import 'package:upgrader/upgrader.dart';
 
 import '../../core/constants/app_theme/custom_color_scheme.dart';
 import '../../core/data/view_models/user/user_vm.dart';
@@ -24,6 +29,8 @@ class _BottomNavState extends ConsumerState<BottomNav> {
     final userVm = ref.read(userViewModel);
     final dashboardVm = ref.read(dashboardViewModel);
     final donationVm = ref.read(donationViewModel);
+    final eventsVm = ref.read(eventsViewModel);
+    final transactionsVm = ref.read(transactionsViewModel);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       //toggle logged in flag to true
@@ -34,10 +41,18 @@ class _BottomNavState extends ConsumerState<BottomNav> {
 
       //fetch dashboard Details
       dashboardVm.getDashboardSummary();
+      //fetch events
+      eventsVm.getEvents();
 
-      dashboardVm.getTransactions();
+      //get recent donations
+      dashboardVm.getRecentDonations();
+      //get transactions
+      transactionsVm.getTransactions();
+      //Funds Data
       dashboardVm.getFundsData();
+      //User recognitions
       userVm.getRecognitions();
+      //User Pledges
       donationVm.getPledges();
     });
     //init push notification listeners
@@ -141,7 +156,12 @@ class _BottomNavState extends ConsumerState<BottomNav> {
             ),
           ),
         ),
-        body: IndexedStack(index: vm.currentIndex, children: vm.screens),
+        body: UpgradeAlert(
+          dialogStyle: Platform.isAndroid
+              ? UpgradeDialogStyle.material
+              : UpgradeDialogStyle.cupertino,
+          child: IndexedStack(index: vm.currentIndex, children: vm.screens),
+        ),
         // Container(
         //   color: ColorPath.athensGrey4,
         //   width: double.infinity,

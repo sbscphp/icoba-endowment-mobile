@@ -18,8 +18,10 @@ import 'package:icoba_endowment_mobile/ui/widgets/busy_overlay.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_appbar.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_button.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/custom_radio_button.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_scaffold.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_text_field.dart';
+import 'package:icoba_endowment_mobile/ui/widgets/custom_tooltip.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/screen_title.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/show_flush_bar.dart';
 
@@ -65,6 +67,8 @@ class _SignupState extends ConsumerState<Signup> {
   final TextEditingController _fname = TextEditingController();
   final TextEditingController _lname = TextEditingController();
   final TextEditingController _set = TextEditingController();
+  final TextEditingController _house = TextEditingController();
+  final TextEditingController _wivesChapter = TextEditingController();
   final TextEditingController _alumniId = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
@@ -104,8 +108,10 @@ class _SignupState extends ConsumerState<Signup> {
                       : "Sign up on the ICOBA endowment application.",
                 ),
                 SizedBox(height: 24.h),
+                //?? CORPORATE
                 if (widget.signupType == SignupType.corporateDonor)
                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Clickable(
                         onPressed: () {
@@ -173,7 +179,7 @@ class _SignupState extends ConsumerState<Signup> {
                           // FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(8),
                         ],
-                        keyboardType: TextInputType.number,
+                        // keyboardType: TextInputType.,
                         hintText: "Enter RC Number",
                       ),
                       SizedBox(height: 16.h),
@@ -192,6 +198,145 @@ class _SignupState extends ConsumerState<Signup> {
                         hintText: "Enter TIN",
                       ),
                       SizedBox(height: 16.h),
+                      Row(
+                        children: [
+                          Text("Is Organization owned by an ICOBA Member"),
+                          SizedBox(width: 8),
+                          CustomTooltip(
+                            tipMessage:
+                                "Select Yes if your organisation is owned or led by an Igbobian (an old boy of Igbobi College).",
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          Clickable(
+                            onPressed: () {
+                              vm.isIgbobianOwned = true;
+                              setState(() {});
+                            },
+                            child: Row(
+                              children: [
+                                CustomRadioButton(
+                                  value: vm.isIgbobianOwned == true,
+                                ),
+                                SizedBox(width: 6.h),
+                                Text("Yes"),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 12.h),
+
+                          Clickable(
+                            onPressed: () {
+                              vm.isIgbobianOwned = false;
+                              setState(() {});
+                            },
+                            child: Row(
+                              children: [
+                                CustomRadioButton(
+                                  value: vm.isIgbobianOwned == false,
+                                ),
+                                SizedBox(width: 6.h),
+                                Text("No"),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      if (vm.isIgbobianOwned == true)
+                        Column(
+                          children: [
+                            Clickable(
+                              onPressed: () {
+                                baseBottomSheet(
+                                  context: context,
+                                  content: SelectOptionBottomSheet(
+                                    bottomSheetTitle: "Select Affiliated Set",
+                                    options: vm.sets
+                                        .map((e) => e.name ?? "N/A")
+                                        .toList(),
+                                    onOptionSelected: (value) {
+                                      setState(() {
+                                        _set.text = value;
+                                        vm.selectedSet = vm.sets.firstWhere(
+                                          (element) => element.name == value,
+                                          orElse: () => vm.sets.first,
+                                        );
+                                      });
+                                    },
+                                    selectedOption: _set.text,
+                                  ),
+                                );
+                              },
+                              child: CustomTextField(
+                                label: "Affiliated Set",
+                                controller: _set,
+                                toolTip: CustomTooltip(
+                                  tipMessage:
+                                      "The graduation set of the Igbobian who owns or leads your organisation. This lets your organisation's giving count towards that set.",
+                                ),
+                                enabled: false,
+                                readOnly: true,
+                                hintText: "Select set",
+                                validator: FieldValidator.validate,
+                                suffixIcon: Padding(
+                                  padding: EdgeInsets.only(right: 16.w),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_outlined,
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            Clickable(
+                              onPressed: () {
+                                baseBottomSheet(
+                                  context: context,
+                                  content: SelectOptionBottomSheet(
+                                    bottomSheetTitle: "Select House",
+                                    options: vm.houses
+                                        .map((e) => e.label ?? "N/A")
+                                        .toList(),
+                                    onOptionSelected: (value) {
+                                      setState(() {
+                                        _house.text = value;
+                                        vm.selectedHouse = vm.houses.firstWhere(
+                                          (element) => element.label == value,
+                                          orElse: () => vm.houses.first,
+                                        );
+                                      });
+                                    },
+                                    selectedOption: _house.text,
+                                  ),
+                                );
+                              },
+                              child: CustomTextField(
+                                label: "House",
+                                controller: _house,
+                                toolTip: CustomTooltip(
+                                  tipMessage:
+                                      "The school house of the Igbobian who owns or leads your organisation.",
+                                ),
+                                enabled: false,
+                                readOnly: true,
+                                hintText: "Select House",
+                                // validator: FieldValidator.validate,
+                                suffixIcon: Padding(
+                                  padding: EdgeInsets.only(right: 16.w),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_outlined,
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                          ],
+                        ),
                     ],
                   )
                 else
@@ -251,12 +396,59 @@ class _SignupState extends ConsumerState<Signup> {
                                 );
                               },
                               child: CustomTextField(
-                                label: "Set",
+                                label: "Graduation Set",
+                                toolTip: CustomTooltip(
+                                  tipMessage:
+                                      "The year your set graduated from Igbobi College",
+                                ),
                                 controller: _set,
                                 enabled: false,
                                 readOnly: true,
                                 hintText: "Select set",
                                 validator: FieldValidator.validate,
+                                suffixIcon: Padding(
+                                  padding: EdgeInsets.only(right: 16.w),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down_outlined,
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            Clickable(
+                              onPressed: () {
+                                baseBottomSheet(
+                                  context: context,
+                                  content: SelectOptionBottomSheet(
+                                    bottomSheetTitle: "Select House",
+                                    options: vm.houses
+                                        .map((e) => e.label ?? "N/A")
+                                        .toList(),
+                                    onOptionSelected: (value) {
+                                      setState(() {
+                                        _house.text = value;
+                                        vm.selectedHouse = vm.houses.firstWhere(
+                                          (element) => element.label == value,
+                                          orElse: () => vm.houses.first,
+                                        );
+                                      });
+                                    },
+                                    selectedOption: _house.text,
+                                  ),
+                                );
+                              },
+                              child: CustomTextField(
+                                label: "House",
+                                controller: _house,
+                                toolTip: CustomTooltip(
+                                  tipMessage:
+                                      "The school house you belonged to at Igbobi College: Parker, Townsend, Oluwole, Aggrey or Freeman.",
+                                ),
+                                enabled: false,
+                                readOnly: true,
+                                hintText: "Select House",
+                                // validator: FieldValidator.validate,
                                 suffixIcon: Padding(
                                   padding: EdgeInsets.only(right: 16.w),
                                   child: Icon(
@@ -331,6 +523,242 @@ class _SignupState extends ConsumerState<Signup> {
                   ),
                 ),
                 SizedBox(height: 16.h),
+
+                //?? WIVES
+                if (widget.signupType == SignupType.wives)
+                  Column(
+                    children: [
+                      Clickable(
+                        onPressed: () {
+                          baseBottomSheet(
+                            context: context,
+                            content: SelectOptionBottomSheet(
+                              bottomSheetTitle: "Select Wives of ICOBA chapter",
+                              options: vm.wivesChapter
+                                  .map((e) => e.label ?? "N/A")
+                                  .toList(),
+                              onOptionSelected: (value) {
+                                setState(() {
+                                  _wivesChapter.text = value;
+                                  vm.selectedWivesChapter = vm.wivesChapter
+                                      .firstWhere(
+                                        (element) => element.label == value,
+                                        orElse: () => vm.wivesChapter.first,
+                                      );
+                                });
+                              },
+                              selectedOption: _wivesChapter.text,
+                            ),
+                          );
+                        },
+                        child: CustomTextField(
+                          label: "Wives of ICOBA chapter",
+                          controller: _wivesChapter,
+                          toolTip: CustomTooltip(
+                            tipMessage:
+                                "The Wives of ICOBA chapter you belong to: ICOBANA Wives, Wives of ICOBA Europe, or Wives of ICOBA International.",
+                          ),
+                          enabled: false,
+                          readOnly: true,
+                          hintText: "Select your Wives of ICOBA chapter",
+                          validator: FieldValidator.validate,
+                          suffixIcon: Padding(
+                            padding: EdgeInsets.only(right: 16.w),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_outlined,
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      Clickable(
+                        onPressed: () {
+                          baseBottomSheet(
+                            context: context,
+                            content: SelectOptionBottomSheet(
+                              bottomSheetTitle: "Select Affiliated Set",
+                              options: vm.sets
+                                  .map((e) => e.name ?? "N/A")
+                                  .toList(),
+                              onOptionSelected: (value) {
+                                setState(() {
+                                  _set.text = value;
+                                  vm.selectedSet = vm.sets.firstWhere(
+                                    (element) => element.name == value,
+                                    orElse: () => vm.sets.first,
+                                  );
+                                });
+                              },
+                              selectedOption: _set.text,
+                            ),
+                          );
+                        },
+                        child: CustomTextField(
+                          label: "Affiliated Set",
+                          controller: _set,
+                          toolTip: CustomTooltip(
+                            tipMessage:
+                                "The graduation set of your husband or the Igbobian you are connected to. This lets your giving count towards that set.",
+                          ),
+                          enabled: false,
+                          readOnly: true,
+                          hintText: "Select set",
+                          validator: FieldValidator.validate,
+                          suffixIcon: Padding(
+                            padding: EdgeInsets.only(right: 16.w),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_outlined,
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      Clickable(
+                        onPressed: () {
+                          baseBottomSheet(
+                            context: context,
+                            content: SelectOptionBottomSheet(
+                              bottomSheetTitle: "Select House",
+                              options: vm.houses
+                                  .map((e) => e.label ?? "N/A")
+                                  .toList(),
+                              onOptionSelected: (value) {
+                                setState(() {
+                                  _house.text = value;
+                                  vm.selectedHouse = vm.houses.firstWhere(
+                                    (element) => element.label == value,
+                                    orElse: () => vm.houses.first,
+                                  );
+                                });
+                              },
+                              selectedOption: _house.text,
+                            ),
+                          );
+                        },
+                        child: CustomTextField(
+                          label: "House",
+                          controller: _house,
+                          toolTip: CustomTooltip(
+                            tipMessage:
+                                "The school house your husband or the Igbobian you are connected to belonged to at Igbobi College.",
+                          ),
+                          enabled: false,
+                          readOnly: true,
+                          hintText: "Select House",
+                          // validator: FieldValidator.validate,
+                          suffixIcon: Padding(
+                            padding: EdgeInsets.only(right: 16.w),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_outlined,
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
+                  ),
+
+                //?? FRIENDS AND RELATIVES
+                if (widget.signupType == SignupType.familiesOfIcoba ||
+                    widget.signupType == SignupType.friendOfIcoba)
+                  Column(
+                    children: [
+                      Clickable(
+                        onPressed: () {
+                          baseBottomSheet(
+                            context: context,
+                            content: SelectOptionBottomSheet(
+                              bottomSheetTitle: "Select Affiliated Set",
+                              options: vm.sets
+                                  .map((e) => e.name ?? "N/A")
+                                  .toList(),
+                              onOptionSelected: (value) {
+                                setState(() {
+                                  _set.text = value;
+                                  vm.selectedSet = vm.sets.firstWhere(
+                                    (element) => element.name == value,
+                                    orElse: () => vm.sets.first,
+                                  );
+                                });
+                              },
+                              selectedOption: _set.text,
+                            ),
+                          );
+                        },
+                        child: CustomTextField(
+                          label: "Affiliated Set",
+                          controller: _set,
+                          toolTip: CustomTooltip(
+                            tipMessage:
+                                widget.signupType == SignupType.friendOfIcoba
+                                ? "The graduation set of the Igbobian who invited you to support the Endowment Fund. This lets your giving count towards that set."
+                                : "The graduation set of the Igbobian you are related to. This lets your giving count towards that set.",
+                          ),
+                          enabled: false,
+                          readOnly: true,
+                          hintText: "Select set",
+                          validator: FieldValidator.validate,
+                          suffixIcon: Padding(
+                            padding: EdgeInsets.only(right: 16.w),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_outlined,
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      Clickable(
+                        onPressed: () {
+                          baseBottomSheet(
+                            context: context,
+                            content: SelectOptionBottomSheet(
+                              bottomSheetTitle: "Select House",
+                              options: vm.houses
+                                  .map((e) => e.label ?? "N/A")
+                                  .toList(),
+                              onOptionSelected: (value) {
+                                setState(() {
+                                  _house.text = value;
+                                  vm.selectedHouse = vm.houses.firstWhere(
+                                    (element) => element.label == value,
+                                    orElse: () => vm.houses.first,
+                                  );
+                                });
+                              },
+                              selectedOption: _house.text,
+                            ),
+                          );
+                        },
+                        child: CustomTextField(
+                          label: "House",
+                          controller: _house,
+                          toolTip: CustomTooltip(
+                            tipMessage:
+                                widget.signupType == SignupType.friendOfIcoba
+                                ? "The school house of the Igbobian who invited you: Parker, Townsend, Oluwole, Aggrey or Freeman."
+                                : "The school house of the Igbobian you are related to at Igbobi College.",
+                          ),
+                          enabled: false,
+                          readOnly: true,
+                          hintText: "Select House",
+                          // validator: FieldValidator.validate,
+                          suffixIcon: Padding(
+                            padding: EdgeInsets.only(right: 16.w),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_outlined,
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
+                  ),
+
                 if (!widget.isDonation)
                   Column(
                     children: [
@@ -400,6 +828,13 @@ class _SignupState extends ConsumerState<Signup> {
                             guestDonorType: handleParam(
                               vm.selectedDonorType?.slug ?? "",
                             ),
+                            guestHouse: handleParam(
+                              vm.selectedHouse?.value ?? "",
+                            ),
+                            guestWifeChapter: handleParam(
+                              vm.selectedWivesChapter?.value ?? "",
+                            ),
+                            isIgbobianOwned: vm.isIgbobianOwned,
                           ),
                           routeName: NamedRoutes.contributionAmount,
                         );
@@ -428,6 +863,7 @@ class _SignupState extends ConsumerState<Signup> {
                         }
                         if (widget.signupType == SignupType.friendOfIcoba ||
                             widget.signupType == SignupType.familiesOfIcoba ||
+                            widget.signupType == SignupType.wives ||
                             widget.signupType == SignupType.none) {
                           await vm.registerFriends(
                             email: _email.text,
@@ -473,7 +909,7 @@ class _SignupState extends ConsumerState<Signup> {
     );
   }
 
-  checkPassWordRequirement({required String password}) {
+  void checkPassWordRequirement({required String password}) {
     final hasMinLength = password.trim().length > 7;
     final hasUpperCase = password.contains(RegExp(r'[A-Z]'));
     final hasLowerCase = password.contains(RegExp(r'[a-z]'));

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
+import 'package:icoba_endowment_mobile/core/utilities/secure_storage/secure_storage_utils.dart';
+import 'package:icoba_endowment_mobile/ui/pages/authentication/login.dart';
 
 import '../../core/constants/app_asset.dart';
 import '../../core/utilities/navigator.dart';
@@ -27,21 +29,21 @@ class _SplashState extends State<Splash> {
 
   void _handleNav() {
     Timer(Duration(seconds: 2), () async {
-      // final userData = await SecureStorageUtils.retrieveUser();
+      final userData = await SecureStorageUtils.retrieveEmail();
 
-      // if (userData != null) {
-      //   replaceNavigation(
-      //     context: context,
-      //     widget: Login(),
-      //     routeName: NamedRoutes.login,
-      //   );
-      // } else {
-      replaceNavigation(
-        context: context,
-        widget: Landing(),
-        routeName: NamedRoutes.landing,
-      );
-      // }
+      if (userData != null) {
+        replaceNavigation(
+          context: context,
+          widget: Login(),
+          routeName: NamedRoutes.login,
+        );
+      } else {
+        replaceNavigation(
+          context: context,
+          widget: Landing(),
+          routeName: NamedRoutes.landing,
+        );
+      }
     });
     setState(() {});
   }
@@ -60,4 +62,3 @@ class _SplashState extends State<Splash> {
     );
   }
 }
-     

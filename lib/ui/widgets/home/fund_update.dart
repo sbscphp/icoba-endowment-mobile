@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/dashboard_vm.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_painter/custom_progress_bar.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
@@ -56,10 +56,10 @@ class _FundUpdateState extends ConsumerState<FundUpdate> {
                 SizedBox(height: 12.h),
                 Builder(
                   builder: (context) {
-                    if (dashboardVm.dashboardState == ViewState.busy) {
+                    if (dashboardVm.thirdState == ViewState.busy) {
                       return AppLoader();
                     }
-                    if (dashboardVm.dashboardState == ViewState.error) {
+                    if (dashboardVm.thirdState == ViewState.error) {
                       return ErrorState(
                         message: dashboardVm.message,
                         onPressed: () {},

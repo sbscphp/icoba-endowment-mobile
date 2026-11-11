@@ -163,6 +163,17 @@ class _LoginState extends ConsumerState<Login> {
                           );
                           return;
                         }
+                        if (vm.isEmailVerification) {
+                          baseBottomSheet(
+                            context: context,
+                            isDismissible: false,
+                            isScrollControlled: false,
+                            content: AccountVerificationBs(
+                              durationInSeconds: vm.twoFaDuration,
+                            ),
+                          );
+                          return;
+                        }
                         pushAndClearAllNavigation(
                           context: context,
                           widget: BottomNav(),
@@ -223,9 +234,8 @@ class _LoginState extends ConsumerState<Login> {
                           final canLogin = await BiometricUtils.authenticate();
                           if (canLogin ?? false) {
                             await vm.login(
-                              // isBiometricLogin: true,
+                              isBiometricLogin: true,
                               email: _email.text,
-                              password: 'NutJob#@4321',
                             );
                             if (vm.state == ViewState.retrieved) {
                               if (vm.is2FA) {
@@ -235,6 +245,18 @@ class _LoginState extends ConsumerState<Login> {
                                   isScrollControlled: false,
                                   content: AccountVerificationBs(
                                     otpType: OtpType.twoFA,
+                                    durationInSeconds: vm.twoFaDuration,
+                                  ),
+                                );
+                                return;
+                              }
+                              if (vm.isEmailVerification) {
+                                baseBottomSheet(
+                                  context: context,
+                                  isDismissible: false,
+                                  isScrollControlled: false,
+                                  content: AccountVerificationBs(
+                                    otpType: OtpType.verifyEmail,
                                     durationInSeconds: vm.twoFaDuration,
                                   ),
                                 );

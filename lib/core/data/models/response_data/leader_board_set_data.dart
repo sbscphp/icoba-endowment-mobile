@@ -63,7 +63,7 @@ class LeaderBoardSetData {
 
   @override
   String toString() {
-    return 'LeaderBoardSetData(rank: $rank, set: $set, totalAmount: $totalAmount, currency: $currency)';
+    return 'LeaderBoardSetData(rank: $rank, set: $set, totalAmount: $totalAmount, currency: $currency, fufilledAmount: $fulfilledAmount, fufilledAmountNGN: $fulfilledAmountNgn)';
   }
 
   @override

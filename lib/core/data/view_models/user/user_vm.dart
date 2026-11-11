@@ -28,8 +28,16 @@ class UserVm extends BaseState {
   String get fullName => _user?.fullName ?? "N/A";
   String get email => _user?.email ?? "N/A";
   String get setName => _user?.donor?.set?.setNumber ?? "N/A";
+  String get affiliatedSetName =>
+      _user?.donor?.affiliatedSet?.setNumber ?? "N/A";
   bool get twoFA => _user?.twoFa ?? false;
+  bool get isPushnotificationEnabled =>
+      _user?.pushNotificationsEnabled ?? false;
+  bool get isEmailNotificationsEnabled =>
+      _user?.emailNotificationsEnabled ?? false;
   bool get isOrganization => _user?.donor?.rcNumber != null;
+  bool get isWife => _user?.donor?.wivesType != null;
+  String get house => _user?.donor?.house?.label ?? "N/A";
   String get phone => _user?.phoneNumber ?? "N/A";
   String get tierBadgeUrl => _user?.donationTier?.tierBadgeUrl ?? "";
   bool _isBioUser = false;
@@ -85,6 +93,7 @@ class UserVm extends BaseState {
         .updatePassword(details: details)
         .then((response) async {
           _message = response.message ?? defaultSuccessMessage;
+          await SecureStorageUtils.savePassword(value: password);
           setState(ViewState.retrieved);
         })
         .catchError((e) {
@@ -94,20 +103,20 @@ class UserVm extends BaseState {
   }
 
   NotificationPreference? _notificationPreference;
-  bool get pushNotificationPreference =>
-      _notificationPreference?.pushNotificationsEnabled ?? false;
-  bool get emailNotificationPreference =>
-      _notificationPreference?.emailNotificationsEnabled ?? false;
+  // bool get pushNotificationPreference =>
+  //     _notificationPreference?.pushNotificationsEnabled ?? false;
+  // bool get emailNotificationPreference =>
+  //     _notificationPreference?.emailNotificationsEnabled ?? false;
 
   Future<void> updateNotificationPreference({
     bool? pushNotifications,
     bool? emailNotifications,
   }) async {
     if (pushNotifications != null) {
-      _notificationPreference?.pushNotificationsEnabled = pushNotifications;
+      _user?.pushNotificationsEnabled = pushNotifications;
     }
     if (emailNotifications != null) {
-      _notificationPreference?.emailNotificationsEnabled = emailNotifications;
+      _user?.emailNotificationsEnabled = emailNotifications;
     }
     setState(ViewState.busy);
     final details = {

@@ -119,47 +119,63 @@ class _SuccessfulDonationState extends ConsumerState<SuccessfulDonation> {
               padding: EdgeInsets.only(left: 16.w, right: 16.w),
               child: ListView(
                 children: [
+                  SizedBox(height: 24.h),
                   CustomAssetViewer(
-                    asset: AppAsset.success,
+                    asset:
+                        guestDonationVm.receiptNumber != "" ||
+                            vm.receiptNumber != ""
+                        ? AppAsset.success
+                        : AppAsset.error,
                     useColorFilter: false,
                     height: 105.h,
                     width: 105.h,
+                    fit: BoxFit.contain,
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    "Transaction successful!",
+                    guestDonationVm.receiptNumber != "" ||
+                            vm.receiptNumber != ""
+                        ? "Transaction successful!"
+                        : "Transaction failed!",
                     style: textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   Text(
-                    "You have made an impact to this project. We appreciate your contribution to this cause.",
+                    guestDonationVm.receiptNumber != "" ||
+                            vm.receiptNumber != ""
+                        ? "You have made an impact to this project. We appreciate your contribution to this cause."
+                        : "We could not complete this transaction at this time, kindly try again.",
                     style: textTheme.bodyMedium?.copyWith(
                       color: colorScheme.textSecondary,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 24.h),
-                  CustomButton(
-                    onPressed: () async {
-                      await vm.downloadReceipt(
-                        receiptNumber: widget.isGuest
-                            ? guestDonationVm.receiptNumber
-                            : vm.receiptNumber,
-                      );
-                      if (vm.state == ViewState.error) {
-                        showFlushBar(
-                          context: context,
-                          message: vm.message,
-                          success: false,
+                  if (guestDonationVm.receiptNumber != "" ||
+                      vm.receiptNumber != "")
+                    CustomButton(
+                      onPressed: () async {
+                        await vm.downloadReceipt(
+                          receiptNumber: widget.isGuest
+                              ? guestDonationVm.receiptNumber
+                              : vm.receiptNumber,
                         );
-                      }
-                    },
-                    showLoader: vm.state == ViewState.busy,
-                    buttonText: "Download receipt",
-                  ),
-                  SizedBox(height: 12.h),
+                        if (vm.state == ViewState.error) {
+                          showFlushBar(
+                            context: context,
+                            message: vm.message,
+                            success: false,
+                          );
+                        }
+                      },
+                      showLoader: vm.state == ViewState.busy,
+                      buttonText: "Download receipt",
+                    ),
+                  if (guestDonationVm.receiptNumber != "" ||
+                      vm.receiptNumber != "")
+                    SizedBox(height: 12.h),
                   CustomButton(
                     onPressed: () {
                       if (widget.isGuest) {

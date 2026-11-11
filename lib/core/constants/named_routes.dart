@@ -22,6 +22,7 @@ class NamedRoutes {
   static const recognition = '/recognition';
   static const recentDonations = '/recentDonations';
   static const recentPledges = '/recentPledges';
+  static const viewEvent = '/viewEvent';
 
   //notification
   static const notificationScreen = '/notificationScreen';

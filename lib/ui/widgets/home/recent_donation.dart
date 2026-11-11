@@ -3,22 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_asset.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
-import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/user/user_vm.dart';
-import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
+// import 'package:icoba_endowment_mobile/core/data/view_models/user/user_vm.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/app_loader.dart';
 // import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 // import 'package:icoba_endowment_mobile/core/utilities/extensions/color_extensions.dart';
-import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
-import 'package:icoba_endowment_mobile/ui/widgets/donor.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/empty_state.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/icoba_container.dart';
-import 'package:icoba_endowment_mobile/ui/widgets/listview_items/Screens/recent_donations.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/listview_items/recent_donor_item.dart';
 
 import '../../../core/data/enum/view_state.dart';
-import '../../../core/data/view_models/dashboard_vm.dart';
+import '../../../core/data/view_models/dashboard/dashboard_vm.dart';
 import '../error_state.dart';
+
 // import 'package:icoba_endowment_mobile/ui/widgets/naira_display.dart';
 
 class RecentDonation extends ConsumerStatefulWidget {
@@ -46,7 +42,7 @@ class _RecentDonationState extends ConsumerState<RecentDonation> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final dashboardVm = ref.watch(dashboardViewModel);
-    final userVm = ref.watch(userViewModel);
+    // final userVm = ref.watch(userViewModel);
 
     return IcobaContainer(
       padding: EdgeInsets.all(16.w),
@@ -86,10 +82,10 @@ class _RecentDonationState extends ConsumerState<RecentDonation> {
           SizedBox(height: 12.h),
           Builder(
             builder: (context) {
-              if (dashboardVm.dashboardState == ViewState.busy) {
+              if (dashboardVm.secondState == ViewState.busy) {
                 return AppLoader();
               }
-              if (dashboardVm.dashboardState == ViewState.error) {
+              if (dashboardVm.secondState == ViewState.error) {
                 // if (true) {
                 return Center(
                   child: ErrorState(
@@ -100,12 +96,12 @@ class _RecentDonationState extends ConsumerState<RecentDonation> {
                   ),
                 );
               }
-              if (dashboardVm.transactions.isEmpty) {
+              if (dashboardVm.donors.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(18.0),
                   child: EmptyState(
                     asset: AppAsset.empty,
-                    title: "You are yet to make a donation",
+                    title: "We are yet to record any Donation",
                   ),
                 );
               }

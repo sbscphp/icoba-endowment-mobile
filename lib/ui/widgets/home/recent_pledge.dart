@@ -59,7 +59,7 @@ class _RecentPledgeState extends ConsumerState<RecentPledge> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Your pledges History",
+                "Your Pledge History",
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

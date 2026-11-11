@@ -1,5 +1,6 @@
 import 'package:icoba_endowment_mobile/core/data/models/response_data/corporate_category.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/donation_category.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/info_data.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/sets_category.dart';
 
 class User {
@@ -13,9 +14,9 @@ class User {
   final String? phoneNumber;
   final String? countryCode;
   bool? twoFa;
-  final bool? emailNotificationsEnabled;
-  final bool? pushNotificationsEnabled;
-  final bool? biometricsEnabled;
+   bool? emailNotificationsEnabled;
+   bool? pushNotificationsEnabled;
+   bool? biometricsEnabled;
   final int? isActive;
   final int? canLogin;
   final String? lastLoginAt;
@@ -150,6 +151,10 @@ class Donor {
   final String? rcNumber;
   final String? tin;
   final SetsCategory? set;
+  final SetsCategory? affiliatedSet;
+  final InfoData? house;
+  final InfoData? wivesType;
+  final bool? isIgbobianOwned;
   final CorporateCategory? corporateCategory;
 
   const Donor({
@@ -159,6 +164,10 @@ class Donor {
     this.rcNumber,
     this.tin,
     this.set,
+    this.affiliatedSet,
+    this.house,
+    this.isIgbobianOwned,
+    this.wivesType,
     this.corporateCategory,
   });
 
@@ -175,6 +184,10 @@ class Donor {
       corporateCategory: json['corporate_category'] != null
           ? CorporateCategory.fromJson(json['corporate_category'])
           : null,
+      affiliatedSet:json['affiliated_set'] != null ? SetsCategory.fromJson(json['affiliated_set']) : null,
+      house: json['house'] != null ? InfoData.fromJson(json['house']) : null,
+      wivesType: json['wives_type'] != null ? InfoData.fromJson(json['wives_type']) : null,
+      isIgbobianOwned: json['is_igbobian_owned']
     );
   }
 

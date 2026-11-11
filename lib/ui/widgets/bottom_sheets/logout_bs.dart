@@ -56,8 +56,8 @@ class LogoutBs extends StatelessWidget {
                   locator<NavigationService>();
 
               navigationService.pushAndClearRoutes(
-                routeName: NamedRoutes.login,
-                clearRoute: NamedRoutes.landing,
+                routeName: NamedRoutes.landing,
+                clearRoute: "/",
               );
             },
             buttonText: "Yes, logout",

@@ -6,7 +6,8 @@ import 'package:icoba_endowment_mobile/core/data/data_providers/donation_data_pr
 import 'package:icoba_endowment_mobile/core/data/models/response_data/checkout_response.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/checkout_validation_response.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/pledge_data.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:open_filex_plus/open_filex_plus.dart';
+// import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../locator.dart';
@@ -105,6 +106,7 @@ class DonationVm extends BaseState {
   //Pay with Card
   Future<void> stripeCheckout({
     required double amount,
+    required String donationPurpose,
     String donationType = 'donation',
     bool isAnonymous = false,
   }) async {
@@ -115,6 +117,7 @@ class DonationVm extends BaseState {
       "currency": _selectedCurrency,
       "campaign_uuid": _designatedCampaign?.campaignId,
       // "pledge_uuid": "f9fbee7f-5248-40ae-9b9a-4bde475eaad0",//todo::: handle pedge uuid
+      "purpose": donationPurpose,
       "is_anonymous": isAnonymous,
       "payment_gateway": "stripe", //stripe, paystack
       "metadata": {"source": donationType},
@@ -192,10 +195,7 @@ class DonationVm extends BaseState {
         });
   }
 
-  //todo::: handle currency mapping
-  InitiateTransferResponse? _initiateTransferResponse;
-  InitiateTransferResponse? get initiateTransferResponse =>
-      _initiateTransferResponse;
+  InitiateTransferResponse? initiateTransferResponse;
 
   //Pay with Bank
   Future<void> initiateBankTransfer({
@@ -221,7 +221,7 @@ class DonationVm extends BaseState {
         .initiateBankTransfer(details: details)
         .then((response) async {
           _message = response.message ?? defaultSuccessMessage;
-          _initiateTransferResponse = response.data;
+          initiateTransferResponse = response.data;
           setDonationState(ViewState.retrieved);
         })
         .catchError((e) {
@@ -238,11 +238,11 @@ class DonationVm extends BaseState {
 
     await _dataProvider
         .acknowledgeBankTransfer(
-          transactionUUID: _initiateTransferResponse?.transactionUuid ?? "",
+          transactionUUID: initiateTransferResponse?.transactionUuid ?? "",
         )
         .then((response) async {
           _message = response.message ?? defaultSuccessMessage;
-          _initiateTransferResponse = response.data;
+          initiateTransferResponse = response.data;
           setDonationState(ViewState.retrieved);
         })
         .catchError((e) {

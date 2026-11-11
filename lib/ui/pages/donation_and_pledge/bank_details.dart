@@ -7,8 +7,11 @@ import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/constants/named_routes.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/donation_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/guest_donation_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/navigator.dart';
+import 'package:icoba_endowment_mobile/ui/pages/bottom_nav.dart';
 import 'package:icoba_endowment_mobile/ui/pages/donation_and_pledge/successful_donation.dart';
+import 'package:icoba_endowment_mobile/ui/pages/landing.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/busy_overlay.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/clickable.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_appbar.dart';
@@ -22,11 +25,13 @@ import '../../../core/data/enum/contribution_type.dart';
 class BankDetails extends ConsumerStatefulWidget {
   final double amount;
   final ContributionType contributionType;
+  final bool isGuest;
 
   const BankDetails({
     super.key,
     required this.amount,
     this.contributionType = ContributionType.donation,
+    this.isGuest = false,
   });
 
   @override
@@ -38,6 +43,10 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(donationViewModel).selectedAccount = null;
+      ref.read(guestDonationViewModel).selectedAccount = null;
+
+      ref.read(donationViewModel).initiateTransferResponse = null;
+      ref.read(guestDonationViewModel).initiateTransferResponse = null;
       setState(() {});
     });
     super.initState();
@@ -48,9 +57,12 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final vm = ref.watch(donationViewModel);
+    final guestVm = ref.watch(guestDonationViewModel);
 
     return BusyOverlay(
-      show: vm.donationState == ViewState.busy,
+      show:
+          vm.donationState == ViewState.busy ||
+          guestVm.donationState == ViewState.busy,
       child: CustomScaffold(
         useHorizontalPadding: false,
         useSafeArea: false,
@@ -77,7 +89,9 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
                   margin: EdgeInsets.only(top: 16.h),
                   padding: EdgeInsets.only(top: 16.w, left: 16.w, right: 16.w),
                   height: double.infinity,
-                  child: vm.initiateTransferResponse == null
+                  child:
+                      vm.initiateTransferResponse == null &&
+                          guestVm.initiateTransferResponse == null
                       ? ListView(
                           children: [
                             Text(
@@ -117,6 +131,11 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
                                 final bankAccount = vm.bankAccounts[index];
                                 return Clickable(
                                   onPressed: () {
+                                    //set if isGuest
+                                    if (widget.isGuest) {
+                                      guestVm.selectedAccount = bankAccount;
+                                    }
+
                                     vm.selectedAccount = bankAccount;
                                     setState(() {});
                                   },
@@ -234,7 +253,11 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
                       : ListView(
                           children: [
                             Text(
-                              vm.initiateTransferResponse?.instructions ?? "",
+                              vm.initiateTransferResponse?.instructions ??
+                                  guestVm
+                                      .initiateTransferResponse
+                                      ?.instructions ??
+                                  "",
                             ),
                             SizedBox(height: 12.h),
                             IcobaContainer(
@@ -254,7 +277,7 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
                                       color: ColorPath.brandColor,
                                     ),
                                     child: Text(
-                                      "${vm.selectedAccount?.currency} ACCOUNT",
+                                      "${vm.initiateTransferResponse?.currency ?? guestVm.initiateTransferResponse?.currency ?? "N/A"} ACCOUNT",
                                       style: textTheme.bodySmall?.copyWith(
                                         fontSize: 10.sp,
                                         fontWeight: FontWeight.bold,
@@ -343,6 +366,9 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
                                           vm
                                                   .initiateTransferResponse
                                                   ?.bankTransferReference ??
+                                              guestVm
+                                                  .initiateTransferResponse
+                                                  ?.bankTransferReference ??
                                               "N/A",
                                           textAlign: TextAlign.end,
                                         ),
@@ -380,43 +406,100 @@ class _BankDetailsState extends ConsumerState<BankDetails> {
                 child: Column(
                   children: [
                     CustomButton(
-                      buttonText: vm.initiateTransferResponse == null
+                      buttonText:
+                          vm.initiateTransferResponse == null &&
+                              guestVm.initiateTransferResponse == null
                           ? "Initiate transfer"
                           : "I have sent the money",
                       onPressed: vm.selectedAccount == null
                           ? null
                           : () async {
-                              if (vm.initiateTransferResponse == null) {
-                                await vm.initiateBankTransfer(
-                                  amount: widget.amount,
-                                );
+                              if (widget.isGuest) {
+                                if (guestVm.initiateTransferResponse == null) {
+                                  await guestVm.initiateBankTransfer(
+                                    amount: widget.amount,
+                                  );
 
-                                if (vm.donationState == ViewState.error) {
+                                  if (guestVm.donationState ==
+                                      ViewState.error) {
+                                    showFlushBar(
+                                      context: context,
+                                      message: guestVm.message,
+                                      success: false,
+                                    );
+                                  }
+
+                                  return;
+                                }
+                                await guestVm.acknowledgeBankTransfer();
+                                if (guestVm.donationState ==
+                                    ViewState.retrieved) {
+                                  if (widget.isGuest) {
+                                    pushAndClearAllNavigation(
+                                      context: context,
+                                      widget: Landing(),
+                                      routeName: NamedRoutes.landing,
+                                    );
+                                  } else {
+                                    pushAndClearAllNavigation(
+                                      context: context,
+                                      widget: BottomNav(),
+                                      routeName: NamedRoutes.bottomNav,
+                                    );
+                                  }
+                                  showFlushBar(
+                                    context: context,
+                                    message: guestVm.message,
+                                  );
+                                } else {
+                                  showFlushBar(
+                                    context: context,
+                                    message: guestVm.message,
+                                    success: false,
+                                  );
+                                }
+                              } else {
+                                if (vm.initiateTransferResponse == null) {
+                                  await vm.initiateBankTransfer(
+                                    amount: widget.amount,
+                                  );
+
+                                  if (vm.donationState == ViewState.error) {
+                                    showFlushBar(
+                                      context: context,
+                                      message: vm.message,
+                                      success: false,
+                                    );
+                                  }
+
+                                  return;
+                                }
+                                await vm.acknowledgeBankTransfer();
+                                if (vm.donationState == ViewState.retrieved) {
+                                  if (widget.isGuest) {
+                                    pushAndClearAllNavigation(
+                                      context: context,
+                                      widget: Landing(),
+                                      routeName: NamedRoutes.landing,
+                                    );
+                                  } else {
+                                    pushAndClearAllNavigation(
+                                      context: context,
+                                      widget: BottomNav(),
+                                      routeName: NamedRoutes.bottomNav,
+                                    );
+                                  }
+                                  showFlushBar(
+                                    context: context,
+                                    message: vm.message,
+                                  );
+                                } else {
                                   showFlushBar(
                                     context: context,
                                     message: vm.message,
                                     success: false,
                                   );
                                 }
-
-                                return;
-                              }
-                              await vm.acknowledgeBankTransfer();
-                              if (vm.donationState == ViewState.retrieved) {
-                                pushNavigation(
-                                  context: context,
-                                  widget: SuccessfulDonation(
-                                    verifyPayment: false,
-                                    contributionType: widget.contributionType,
-                                  ),
-                                  routeName: NamedRoutes.successfulDonation,
-                                );
-                              } else {
-                                showFlushBar(
-                                  context: context,
-                                  message: vm.message,
-                                  success: false,
-                                );
                               }
                             },
                     ),

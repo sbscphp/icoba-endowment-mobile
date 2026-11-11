@@ -14,6 +14,8 @@ class LoginResponse {
   final bool? twofa;
   final String? otpPurpose;
   final String? otpChannel;
+  //Drop off send code
+  final bool? newCodeSent;
 
   final User? user;
 
@@ -32,6 +34,8 @@ class LoginResponse {
     this.otpPurpose,
     this.otpChannel,
     this.twofa,
+    //Drop off send code
+    this.newCodeSent,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
@@ -50,6 +54,8 @@ class LoginResponse {
       otpPurpose: json['otp_purpose'],
       otpChannel: json['otp_channel'],
       twofa: json['2fa'],
+      //Drop off send code
+      newCodeSent: json['new_code_sent'],
     );
   }
 

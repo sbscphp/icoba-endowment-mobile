@@ -4,7 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_asset.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/leaderboard_vm.dart';
 import 'package:icoba_endowment_mobile/core/utilities/debouncer.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/empty_state.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/error_state.dart';
@@ -42,11 +42,12 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _setScrollListener();
       _donorScrollListener();
+      _houseScrollListener();
     });
   }
 
   void _setScrollListener() {
-    final vm = ref.watch(dashboardViewModel);
+    final vm = ref.watch(leaderboardViewModel);
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
@@ -63,8 +64,8 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
     });
   }
 
-  void _donorScrollListener() {
-    final vm = ref.watch(dashboardViewModel);
+  void _houseScrollListener() {
+    final vm = ref.watch(leaderboardViewModel);
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
@@ -72,8 +73,25 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
         if (vm.paginatedState != ViewState.error) {
           //check if data is not being currently fetched and also check total records
           if (vm.paginatedState != ViewState.busy &&
-              vm.leaderBoardSets.length < vm.donorPledgetotal &&
-              vm.selectedDonationViewType != "sets") {
+              vm.leaderBoardHouses.length < vm.housePledgetotal) {
+            //fetch more
+            vm.getLeaderBoardHouses(firstCall: false, sortDirection: 'desc');
+          }
+        }
+      }
+    });
+  }
+
+  void _donorScrollListener() {
+    final vm = ref.watch(leaderboardViewModel);
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        //check paginated state
+        if (vm.paginatedState != ViewState.error) {
+          //check if data is not being currently fetched and also check total records
+          if (vm.paginatedState != ViewState.busy &&
+              vm.leaderBoardDonors.length < vm.donorPledgetotal) {
             //fetch more
             vm.getLeaderBoardDonors(firstCall: false);
           }
@@ -86,7 +104,7 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     // final colorScheme = Theme.of(context).colorScheme;
-    final dashboardVm = ref.watch(dashboardViewModel);
+    final leaderboardVm = ref.watch(leaderboardViewModel);
 
     return Container(
       color: ColorPath.athensGrey4,
@@ -96,33 +114,37 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
         padding: EdgeInsets.all(16.w),
         child: Builder(
           builder: (context) {
-            if (dashboardVm.leaderboardState == ViewState.busy) {
+            if (leaderboardVm.state == ViewState.busy) {
               return AppLoader();
             }
-            if (dashboardVm.leaderboardState == ViewState.error) {
+            if (leaderboardVm.state == ViewState.error) {
               return ErrorState(
-                message: dashboardVm.message,
+                message: leaderboardVm.message,
                 onPressed: () {
-                  dashboardVm.getLeaderBoardDonors();
+                  leaderboardVm.getLeaderBoardDonors();
+                  leaderboardVm.getLeaderBoardSets();
+                  leaderboardVm.getLeaderBoardHouses();
                 },
               );
             }
 
-            if (dashboardVm.leaderBoardDonors.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: EmptyState(
-                  asset: AppAsset.empty,
-                  title: "No Donations Yet",
-                ),
-              );
-            }
+            // if (dashboardVm.leaderBoardDonors.isEmpty) {
+            //   return Padding(
+            //     padding: const EdgeInsets.all(18.0),
+            //     child: EmptyState(
+            //       asset: AppAsset.empty,
+            //       title: "No Donations Yet",
+            //     ),
+            //   );
+            // }
             return RefreshIndicator(
               onRefresh: () async {
-                if (dashboardVm.selectedDonationViewType == "sets") {
-                  dashboardVm.getLeaderBoardSets(sortDirection: 'desc');
+                if (leaderboardVm.selectedDonationViewType == "sets") {
+                  leaderboardVm.getLeaderBoardSets(sortDirection: 'desc');
+                } else if (leaderboardVm.selectedDonationViewType == "houses") {
+                  leaderboardVm.getLeaderBoardHouses(sortDirection: 'desc');
                 } else {
-                  dashboardVm.getLeaderBoardDonors();
+                  leaderboardVm.getLeaderBoardDonors();
                 }
               },
               child: SingleChildScrollView(
@@ -131,10 +153,10 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
 
                 child: Column(
                   children: [
-                    if (dashboardVm.selectedDonationViewType == "sets")
+                    if (leaderboardVm.selectedDonationViewType == "sets")
                       Column(
                         children: [
-                          if (dashboardVm.setDonationOne != null)
+                          if (leaderboardVm.setDonationOne != null)
                             IcobaContainer(
                               border: Border.all(
                                 color: ColorPath.primaryYellow,
@@ -156,13 +178,13 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                                     child: Column(
                                       children: [
                                         Text(
-                                          "Set ${dashboardVm.setDonationOne?.set?.setNumber}",
+                                          "Set ${leaderboardVm.setDonationOne?.set?.setNumber}",
                                           style: textTheme.bodySmall,
                                         ),
                                         NairaDisplay(
                                           amount:
                                               double.tryParse(
-                                                dashboardVm
+                                                leaderboardVm
                                                         .setDonationOne
                                                         ?.amountInNgn ??
                                                     "0",
@@ -207,13 +229,13 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                                         child: Column(
                                           children: [
                                             Text(
-                                              "Set ${dashboardVm.setDonationTwo?.set?.setNumber}",
+                                              "Set ${leaderboardVm.setDonationTwo?.set?.setNumber}",
                                               style: textTheme.bodySmall,
                                             ),
                                             NairaDisplay(
                                               amount:
                                                   double.tryParse(
-                                                    dashboardVm
+                                                    leaderboardVm
                                                             .setDonationTwo
                                                             ?.amountInNgn ??
                                                         "0",
@@ -253,13 +275,13 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                                         child: Column(
                                           children: [
                                             Text(
-                                              "Set ${dashboardVm.setDonationThree?.set?.setNumber}",
+                                              "Set ${leaderboardVm.setDonationThree?.set?.setNumber}",
                                               style: textTheme.bodySmall,
                                             ),
                                             NairaDisplay(
                                               amount:
                                                   double.tryParse(
-                                                    dashboardVm
+                                                    leaderboardVm
                                                             .setDonationThree
                                                             ?.amountInNgn ??
                                                         "0",
@@ -301,16 +323,24 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                                       setState(() {
                                         isSearch = false;
                                       });
-                                      if (dashboardVm
+                                      if (leaderboardVm
                                               .selectedDonationViewType ==
                                           "sets") {
-                                        dashboardVm.getLeaderBoardSets(
+                                        leaderboardVm.getLeaderBoardSets(
+                                          sortDirection: 'desc',
+                                          firstCall: false,
+                                          isSearch: true,
+                                        );
+                                      } else if (leaderboardVm
+                                              .selectedDonationViewType ==
+                                          "houses") {
+                                        leaderboardVm.getLeaderBoardHouses(
                                           sortDirection: 'desc',
                                           firstCall: false,
                                           isSearch: true,
                                         );
                                       } else {
-                                        dashboardVm.getLeaderBoardDonors(
+                                        leaderboardVm.getLeaderBoardDonors(
                                           firstCall: false,
                                           isSearch: true,
                                         );
@@ -319,17 +349,26 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                                       setState(() {
                                         isSearch = true;
                                       });
-                                      if (dashboardVm
+                                      if (leaderboardVm
                                               .selectedDonationViewType ==
                                           "sets") {
-                                        dashboardVm.getLeaderBoardSets(
+                                        leaderboardVm.getLeaderBoardSets(
+                                          sortDirection: 'desc',
+                                          firstCall: false,
+                                          searchQuery: value,
+                                          isSearch: true,
+                                        );
+                                      } else if (leaderboardVm
+                                              .selectedDonationViewType ==
+                                          "houses") {
+                                        leaderboardVm.getLeaderBoardHouses(
                                           sortDirection: 'desc',
                                           firstCall: false,
                                           searchQuery: value,
                                           isSearch: true,
                                         );
                                       } else {
-                                        dashboardVm.getLeaderBoardDonors(
+                                        leaderboardVm.getLeaderBoardDonors(
                                           firstCall: false,
                                           searchQuery: value,
                                           isSearch: true,
@@ -343,7 +382,7 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                                 prefixIcon: Icon(CupertinoIcons.search),
                                 border: InputBorder.none,
                                 hintText:
-                                    "Search ${dashboardVm.selectedDonationViewType}",
+                                    "Search ${leaderboardVm.selectedDonationViewType}",
                                 hintStyle: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Theme.of(
@@ -376,47 +415,11 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                     ),
 
                     SizedBox(height: 16.h),
-                    dashboardVm.selectedDonationViewType == "sets"
-                        ? ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final donorSet =
-                                  dashboardVm.leaderBoardSets[index];
-                              return LeaderboardSetItem(donorSet: donorSet);
-                            },
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 16.h),
-                            itemCount: dashboardVm.leaderBoardSets.length,
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final donor =
-                                  dashboardVm.leaderBoardDonors[index];
-                              return Donor(
-                                donorName: donor.displayName,
-                                setNumber: donor.info,
-                                amount:
-                                    double.tryParse(donor.totalAmount ?? '0') ??
-                                    0,
-                                currencyCode: donor.currency,
-                                date: donor.lastDonationAt,
-                                tagColor: ColorPath.dynamicColor(
-                                  donor.tier?.baseColor,
-                                  ColorPath.brandColor,
-                                ),
-                                tagText: donor.donorType?.label,
-                              );
-                            },
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 16.h),
-                            itemCount: dashboardVm.leaderBoardDonors.length,
-                          ),
-                    if (dashboardVm.paginatedState == ViewState.busy)
+                    _handleView(
+                      leaderboardVm.selectedDonationViewType,
+                      leaderboardVm,
+                    ),
+                    if (leaderboardVm.paginatedState == ViewState.busy)
                       Column(
                         children: [
                           SizedBox(height: 6.h),
@@ -427,17 +430,22 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
                           SizedBox(height: 6.h),
                         ],
                       ),
-                    if (dashboardVm.paginatedState == ViewState.error)
+                    if (leaderboardVm.paginatedState == ViewState.error)
                       ErrorState(
                         onPressed: () async {
-                          dashboardVm.getLeaderBoardDonors(firstCall: false);
-                          dashboardVm.getLeaderBoardSets(
+                          leaderboardVm.getLeaderBoardDonors(firstCall: false);
+                          leaderboardVm.getLeaderBoardSets(
+                            firstCall: false,
+                            sortDirection: 'desc',
+                          );
+                          leaderboardVm.getLeaderBoardHouses(
                             firstCall: false,
                             sortDirection: 'desc',
                           );
                         },
                         isPaginationType: true,
                       ),
+                    SizedBox(height: 85.h),
                   ],
                 ),
               ),
@@ -446,5 +454,82 @@ class _LeaderboardDonationsState extends ConsumerState<LeaderboardDonations> {
         ),
       ),
     );
+  }
+
+  Widget _handleView(String viewType, LeaderboardVm dashboardVm) {
+    switch (viewType) {
+      case 'sets':
+        return dashboardVm.leaderBoardSets.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: EmptyState(
+                  asset: AppAsset.empty,
+                  title: isSearch ? "No result for query" : "No Donations Yet",
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final donorSet = dashboardVm.leaderBoardSets[index];
+                  return LeaderboardSetItem(donorSet: donorSet);
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.leaderBoardSets.length,
+              );
+      case 'houses':
+        return dashboardVm.leaderBoardHouses.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: EmptyState(
+                  asset: AppAsset.empty,
+                  title: isSearch ? "No result for query" : "No Donations Yet",
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final house = dashboardVm.leaderBoardHouses[index];
+                  return LeaderboardHouseItem(house: house);
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.leaderBoardHouses.length,
+              );
+
+      default:
+        return dashboardVm.leaderBoardDonors.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: EmptyState(
+                  asset: AppAsset.empty,
+                  title: isSearch ? "No result for query" : "No Donations Yet",
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final donor = dashboardVm.leaderBoardDonors[index];
+                  return Donor(
+                    donorName: donor.displayName,
+                    setNumber: donor.info,
+                    amount: double.tryParse(donor.totalAmount ?? '0') ?? 0,
+                    currencyCode: donor.currency,
+                    date: donor.lastDonationAt,
+                    tagColor: ColorPath.dynamicColor(
+                      donor.tier?.baseColor,
+                      ColorPath.brandColor,
+                    ),
+                    tagText: donor.donorType?.label,
+                  );
+                },
+                separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                itemCount: dashboardVm.leaderBoardDonors.length,
+              );
+    }
   }
 }

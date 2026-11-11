@@ -5,7 +5,7 @@ import 'package:icoba_endowment_mobile/core/constants/app_asset.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_theme/custom_color_scheme.dart';
 import 'package:icoba_endowment_mobile/core/constants/color_path.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
-import 'package:icoba_endowment_mobile/core/data/view_models/dashboard_vm.dart';
+import 'package:icoba_endowment_mobile/core/data/view_models/dashboard/transactions_vm.dart';
 import 'package:icoba_endowment_mobile/core/data/view_models/user/user_vm.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/app_loader.dart';
 import 'package:icoba_endowment_mobile/ui/widgets/custom_appbar.dart';
@@ -35,11 +35,11 @@ class _RecentDonationsState extends ConsumerState<RecentDonations> {
   }
 
   void _fetchData() {
-    ref.read(dashboardViewModel).getTransactions();
+    ref.read(transactionsViewModel).getTransactions();
   }
 
   void _scrollListener() {
-    final vm = ref.watch(dashboardViewModel);
+    final vm = ref.watch(transactionsViewModel);
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
           scrollController.position.maxScrollExtent) {
@@ -60,7 +60,7 @@ class _RecentDonationsState extends ConsumerState<RecentDonations> {
   Widget build(BuildContext context) {
     // final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final dashboardVm = ref.watch(dashboardViewModel);
+    final transactionsVm = ref.watch(transactionsViewModel);
     final userVm = ref.watch(userViewModel);
 
     return CustomScaffold(
@@ -78,18 +78,18 @@ class _RecentDonationsState extends ConsumerState<RecentDonations> {
         padding: EdgeInsets.only(left: 16.w, right: 16.w),
         child: Builder(
           builder: (context) {
-            if (dashboardVm.dashboardState == ViewState.busy) {
+            if (transactionsVm.state == ViewState.busy) {
               return AppLoader();
             }
-            if (dashboardVm.dashboardState == ViewState.error) {
+            if (transactionsVm.state == ViewState.error) {
               return ErrorState(
-                message: dashboardVm.message,
+                message: transactionsVm.message,
                 onPressed: () {
                   _fetchData();
                 },
               );
             }
-            if (dashboardVm.transactions.isEmpty) {
+            if (transactionsVm.transactions.isEmpty) {
               return IcobaContainer(
                 margin: EdgeInsets.only(top: 24.h, bottom: 24.h),
                 child: Center(
@@ -118,7 +118,7 @@ class _RecentDonationsState extends ConsumerState<RecentDonations> {
                         controller: scrollController,
                         physics: AlwaysScrollableScrollPhysics(),
                         itemBuilder: (context, index) {
-                          final data = dashboardVm.transactions[index];
+                          final data = transactionsVm.transactions[index];
                           return Donor(
                             amount: double.tryParse(data.amount ?? "0"),
                             currencyCode: data.currency,
@@ -129,11 +129,11 @@ class _RecentDonationsState extends ConsumerState<RecentDonations> {
                         },
                         separatorBuilder: (context, index) =>
                             SizedBox(height: 16.h),
-                        itemCount: dashboardVm.transactions.length,
+                        itemCount: transactionsVm.transactions.length,
                       ),
                     ),
                   ),
-                  if (dashboardVm.paginatedState == ViewState.busy)
+                  if (transactionsVm.paginatedState == ViewState.busy)
                     Column(
                       children: [
                         SizedBox(height: 6.h),
@@ -144,10 +144,10 @@ class _RecentDonationsState extends ConsumerState<RecentDonations> {
                         SizedBox(height: 6.h),
                       ],
                     ),
-                  if (dashboardVm.paginatedState == ViewState.error)
+                  if (transactionsVm.paginatedState == ViewState.error)
                     ErrorState(
                       onPressed: () async {
-                        dashboardVm.getTransactions(firstCall: false);
+                        transactionsVm.getTransactions(firstCall: false);
                       },
                       isPaginationType: true,
                     ),

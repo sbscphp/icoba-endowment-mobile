@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icoba_endowment_mobile/core/constants/app_constants.dart';
 import 'package:icoba_endowment_mobile/core/data/data_providers/donation_data_provider.dart';
 import 'package:icoba_endowment_mobile/core/data/enum/view_state.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/bank_data.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/campaign_data.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/checkout_response.dart';
 import 'package:icoba_endowment_mobile/core/data/models/response_data/checkout_validation_response.dart';
+import 'package:icoba_endowment_mobile/core/data/models/response_data/initiate_transfer_response.dart';
 import 'package:icoba_endowment_mobile/core/data/states/base_state.dart';
 import 'package:icoba_endowment_mobile/core/utilities/utilities.dart';
 import 'package:icoba_endowment_mobile/locator.dart';
@@ -100,6 +102,27 @@ class GuestDonationVm extends BaseState {
     notifyListeners();
   }
 
+  String? _house;
+  String? get house => _house;
+  set house(String? val) {
+    _house = val;
+    notifyListeners();
+  }
+
+  String? _icobaWives;
+  String? get icobawives => _icobaWives;
+  set icobawives(String? val) {
+    _icobaWives = val;
+    notifyListeners();
+  }
+
+  String? _purpose;
+  String? get purpose => _purpose;
+  set purpose(String? val) {
+    _purpose = val;
+    notifyListeners();
+  }
+
   CampaignData? _selectedCampaign;
   CampaignData? get selectedCampaign => _selectedCampaign;
   set selectedCampaign(CampaignData? campaign) {
@@ -117,6 +140,7 @@ class GuestDonationVm extends BaseState {
     required double amount,
     String donationType = 'donation',
     bool isAnonymous = false,
+    bool isIgbobianOwned = false,
   }) async {
     setDonationState(ViewState.busy);
 
@@ -138,6 +162,10 @@ class GuestDonationVm extends BaseState {
       //friend and family
       "firstname": _fName,
       "lastname": _lName,
+      //
+      "wives_type": _icobaWives,
+      "house": _house,
+      "purpose": _purpose,
 
       "is_anonymous": isAnonymous,
       "payment_gateway": "stripe", //paystack, stripe
@@ -184,6 +212,76 @@ class GuestDonationVm extends BaseState {
         .then((response) async {
           _message = response.message ?? defaultSuccessMessage;
           _checkoutValidationResponse = response.data;
+          setDonationState(ViewState.retrieved);
+        })
+        .catchError((e) {
+          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
+          setDonationState(ViewState.error);
+        });
+  }
+
+  InitiateTransferResponse? initiateTransferResponse;
+  BankData? selectedAccount;
+
+  //Pay with Bank
+  Future<void> initiateBankTransfer({
+    required double amount,
+    String donationType = 'donation',
+  }) async {
+    setDonationState(ViewState.busy);
+
+    final details = {
+      "amount": amount,
+      "currency": _selectedCurrency,
+      "campaign_uuid": _selectedCampaign?.campaignId,
+      "donor_type": _donorType,
+      "donor_email": _email,
+      "donor_phone": _phone,
+      "is_anonymous": false,
+      "metadata": {"source": donationType},
+      "paid_into_account_key": selectedAccount
+          ?.accountKey, //fcmb_ngn, fcmb_usd, fcmb_eur, fcmb_gpb (must match with currency)
+      //corporate
+      "corporate_category_uuid": _corporateUUID,
+      "rc_number": _rcNumber,
+      "tin": _tin,
+      "organization_name": _orgName,
+      //alumni
+      "set_number": _setNumber,
+      "alumni_identifier": _alumniID,
+      //friend and family
+      "firstname": _fName,
+      "lastname": _lName,
+    };
+
+    details.removeWhere((key, value) => value == null);
+
+    await _dataProvider
+        .initiateBankTransfer(details: details)
+        .then((response) async {
+          _message = response.message ?? defaultSuccessMessage;
+          initiateTransferResponse = response.data;
+          setDonationState(ViewState.retrieved);
+        })
+        .catchError((e) {
+          _message = Utilities.formatMessage(e.toString(), isSuccess: false);
+          setDonationState(ViewState.error);
+        });
+  }
+
+  //Acknowledge Payment
+  Future<void> acknowledgeBankTransfer() async {
+    setDonationState(ViewState.busy);
+
+    // details.removeWhere((key, value) => value == null);
+
+    await _dataProvider
+        .acknowledgeBankTransfer(
+          transactionUUID: initiateTransferResponse?.transactionUuid ?? "",
+        )
+        .then((response) async {
+          _message = response.message ?? defaultSuccessMessage;
+          initiateTransferResponse = response.data;
           setDonationState(ViewState.retrieved);
         })
         .catchError((e) {
